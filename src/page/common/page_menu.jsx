@@ -5,6 +5,7 @@ import { AppstoreOutlined, MailOutlined, SettingOutlined } from '@ant-design/ico
 import './page_menu.css'
 
 class index extends Component {
+
     state = {
         rootSubmenuKeys: [],
     }
@@ -62,7 +63,6 @@ class index extends Component {
                             <div style={{ height: '100vh' }}>
                                 {this.props.children}
                             </div>
-
                         </Content >
                     </Layout>
 

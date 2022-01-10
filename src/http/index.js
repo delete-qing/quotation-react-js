@@ -57,14 +57,6 @@ instance.interceptors.response.use(function (response) {
                 message: data.message
             };
         }
-        // else if (response.statusText == 'OK') {
-        //     result = {
-        //         code: 1,
-        //         data: data
-        //     };
-        // }
-
-
 
         return result;
     } else if (response.status === -200) {
