@@ -1,0 +1,106 @@
+.w200 {
+    width: 200px;
+}
+
+.fs {
+    display: flex;
+}
+
+.mr-20 {
+    margin-right: 20px;
+}
+
+.title-span {
+    display: inline-block;
+    width: 300px;
+}
+
+.mt-15 {
+    margin-top: 15px;
+}
+
+.mb-15 {
+    margin-bottom: 15px;
+}
+
+.mr-15 {
+    margin-right: 15px;
+}
+
+.mr-20 {
+    margin-right: 20px;
+}
+
+.ml-10 {
+    margin-left: 10px;
+}
+
+.w300 {
+    width: 300px;
+}
+
+.w100 {
+    width: 100px;
+}
+
+.w145 {
+    width: 145px;
+}
+
+.fs {
+    display: flex;
+}
+
+.w200 {
+    width: 200px;
+}
+
+.lh-32 {
+    line-height: 32px;
+}
+
+.fs-bw {
+    display: flex;
+    justify-content: space-between;
+}
+
+.w280 {
+    width: 280px;
+}
+
+.small-input {
+    width: 104px
+}
+
+.ant-tabs-card.ant-tabs-top>.ant-tabs-nav .ant-tabs-tab+.ant-tabs-tab,
+.ant-tabs-card.ant-tabs-bottom>.ant-tabs-nav .ant-tabs-tab+.ant-tabs-tab,
+.ant-tabs-card.ant-tabs-top>div>.ant-tabs-nav .ant-tabs-tab+.ant-tabs-tab,
+.ant-tabs-card.ant-tabs-bottom>div>.ant-tabs-nav .ant-tabs-tab+.ant-tabs-tab {
+    margin-left: 10px;
+}
+
+.ant-tabs-card>.ant-tabs-nav .ant-tabs-tab,
+.ant-tabs-card>div>.ant-tabs-nav .ant-tabs-tab {
+    padding: 8px 30px;
+}
+
+.ant-tabs-card>.ant-tabs-nav .ant-tabs-tab-active,
+.ant-tabs-card>div>.ant-tabs-nav .ant-tabs-tab-active {
+
+    background-color: #1890ff;
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #fff;
+}
+
+.w90 {
+    width: 90px;
+    display: inline-block;
+    text-align: end;
+    line-height: 32px;
+}
+
+.mr-10 {
+    margin-right: 10px;
+}

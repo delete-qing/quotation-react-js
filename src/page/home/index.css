@@ -1,0 +1,160 @@
+.page {
+    padding: 16px;
+    background-color: #fff;
+}
+
+.search-line {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.input-w {
+    width: 200px;
+}
+
+.mr-20 {
+    margin-right: 20px;
+}
+
+.tab-block {
+    margin-top: 20px;
+}
+
+.color-r :hover {
+    color: red;
+}
+
+.min-block {
+    background-color: #fff;
+}
+
+.flxe-i {
+    display: flex;
+}
+
+.w200 {
+    width: 200px;
+}
+
+
+.mr-30 {
+    margin-right: 30px;
+}
+
+
+.mb-15 {
+    margin-bottom: 15px;
+}
+
+.package-block {
+    border: 1px solid #ccc;
+    padding: 16px;
+    margin-top: 15px;
+}
+
+
+.inquiry-block {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.inquiry {
+    display: block;
+    text-align: end;
+}
+
+.inquiry-childs-block {
+    margin-right: 30px;
+}
+
+
+.title {
+    display: flex;
+}
+
+.title-input {
+    margin-right: 30px;
+}
+
+.ml-10 {
+    margin-left: 10px;
+}
+
+.color-r {
+    color: red;
+}
+
+.footer-button {
+    display: flex;
+    justify-content: center;
+}
+
+.title-block {
+    display: inline-block;
+    margin-right: 50px;
+}
+
+.title-text span {
+    display: inline-block;
+    margin-right: 80px;
+}
+
+.mt-15 {
+    margin-top: 15px;
+}
+
+.mr-100 {
+    display: inline-block;
+    margin-right: 100px;
+}
+
+.footer-flex {
+    display: flex;
+    justify-content: center;
+    margin-top: 50px;
+}
+
+.model-title span {
+    display: inline-block;
+    width: 200px;
+}
+
+.w100 {
+    width: 100px;
+}
+
+.w300 {
+    width: 300px;
+}
+
+.db {
+    display: block;
+    margin-right: 50px;
+}
+
+.upload-class {
+    margin-left: 60px;
+    margin-top: 5px;
+    display: block;
+}
+
+.upload-class :hover {
+    background-color: #ebedf0
+}
+
+.fs-bw {
+    display: flex;
+    justify-content: space-between;
+}
+
+.tab-dowon {
+    display: block
+}
+
+.mt-100 {
+    margin-top: 100px;
+}
+
+.mt-50 {
+    margin-top: 50px;
+}

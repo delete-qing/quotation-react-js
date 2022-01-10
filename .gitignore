@@ -1,0 +1,9 @@
+/node_modules
+/.idea
+package-lock.json
+yarn.lock
+.vscode
+*.local
+dist
+.DS_Store
+.env.local

@@ -1,0 +1,158 @@
+.search-title {
+    display: flex;
+}
+
+.w200 {
+    width: 200px;
+}
+
+.mr-15 {
+    margin-right: 15px;
+}
+
+.mt-15 {
+    margin-top: 15px;
+}
+
+.mr-20 {
+    margin-right: 20px;
+}
+
+.mb-15 {
+    margin-bottom: 15px;
+}
+
+.fs {
+    display: flex;
+}
+
+.top-block span {
+    display: inline-block;
+
+}
+
+.inl-block {
+    display: inline-block;
+    line-height: 32px;
+    width: 90px;
+}
+
+.fs {
+    display: flex;
+}
+
+.w450 {
+    width: 450px;
+}
+
+.lh-32 {
+    line-height: 32px;
+}
+
+.mr-10 {
+    margin-right: 10px;
+}
+
+.ml-10 {
+    margin-left: 10px;
+}
+
+.mb-5 {
+    margin-bottom: 5px;
+}
+
+.but-div {
+    display: flex;
+    justify-content: center;
+}
+
+.but-class {
+    width: 200px;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 50px;
+}
+
+.fw {
+    font-weight: bold;
+}
+
+.botton-quotation {
+    margin-top: 50px;
+    display: flex;
+    justify-content: center;
+}
+
+.check-day {
+    color: #1890ff;
+    margin: 0px 5px 0px 5px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.down-w {
+    margin-top: 5px;
+    display: block;
+}
+
+.down-w :hover {
+    background-color: #ebedf0
+}
+
+.edit-color {
+    color: #1890ff;
+}
+
+
+.ml-5 {
+    margin-left: 5px;
+}
+
+
+
+/* 表格样式 */
+.table-order {
+    margin: 50px;
+}
+
+.table-order table td {
+    border: 1px solid #333;
+    text-align: center;
+    line-height: 32px;
+}
+
+.tab-title {
+    width: 1300px;
+    font-size: 22px;
+    border: 1px solid #333;
+}
+
+.tab-body {
+    height: 70px;
+    line-height: 70px;
+}
+
+.text-all {
+    display: flex;
+    justify-content: center;
+    background-image: url('../../../public/logo.png');
+    background-repeat: no-repeat;
+    height: 50px;
+
+}
+
+.tab-text {
+    width: 230px;
+    text-align-last: justify;
+    line-height: 50px;
+}
+
+.tab-foot {
+    text-align: left;
+    font-size: 12px;
+    line-height: 22px;
+}
+
+.w120 {
+    width: 120px;
+}
