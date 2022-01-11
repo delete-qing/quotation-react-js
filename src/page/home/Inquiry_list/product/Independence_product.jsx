@@ -210,7 +210,6 @@ class Independence_product extends Component {
     // 多选框
     onChangeMultiple = (event, index, index1) => {
         const { inquiryList } = this.state
-        let data = []
         inquiryList.forEach((item, index2) => {
             if (index == index2) {
                 item.options.forEach((j, index3) => {

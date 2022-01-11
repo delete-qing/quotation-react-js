@@ -2,7 +2,13 @@
 
 用的框架 react + antd + vite
 
-## 1. 关于配置
+## 1. 页面踩坑
+
+### 页面大坑
+
+[坑坑坑 💢 💢 🌚 🌑 💥 ](./src/page/page.md)
+
+## 2. 关于配置
 
 ### 运行 🌈
 
@@ -20,9 +26,9 @@
 
 [环境变量](./.env)
 
-[markdown emoji](https://gist.github.com/rxaviers/7360908) 👈
+[markdown emoji](https://gist.github.com/rxaviers/7360908)
 
-以下是我对 **_.env_** 文件的理解 😝
+以下是我对 **_.env_** 文件的理解
 
 1. 首先当初我不是很理解 **_.env_** 文件的作用 所以项目一直对配置文件很懵 不是很知道的怎么用这个文件、会对我的项目造成什么影响 怎么有效的使用它
 

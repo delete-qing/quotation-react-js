@@ -131,7 +131,6 @@ class index extends Component {
         })
     }
     editData(data) {
-        console.log(data);
         this.setState({
             id: data.id,
             name: data.name,
