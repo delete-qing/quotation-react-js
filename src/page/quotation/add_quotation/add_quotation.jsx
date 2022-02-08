@@ -40,7 +40,6 @@ export default class index extends Component {
         }).then(res => {
             if (res.code == 1) {
                 let data = res.data
-                console.log('data:=== ', data);
                 this.getQuotationOrder(data.inquiry_order_id)
                 this.setState({
                     showData: data,

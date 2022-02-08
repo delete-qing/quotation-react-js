@@ -28,10 +28,58 @@ export default class approve_quotation extends Component {
                 title: '产品编号',
                 dataIndex: 'number',
             },
-            // {
-            //     title: '产品说明',
-            //     dataIndex: 'address',
-            // },
+            {
+                title: '产品说明',
+                render: (text, record) => {
+                    let show = []
+                    record.options.forEach(e => {
+                        show.push(
+                            {
+                                name: e.param.name,
+                                pid: e.param.id,
+                                child: [
+                                    {
+                                        name: e.name
+                                    }
+                                ]
+                            }
+                        )
+                    })
+                    let list = {}
+                    show.forEach(i => {
+                        if (list[i.pid]) {
+                            list[i.pid].child.push(...i.child)
+                        } else {
+                            list[i.pid] = i
+                        }
+
+                    })
+
+                    let data = []
+                    for (let key in list) {
+                        let name = []
+                        for (let keyChild in list[key].child) {
+                            name.push(list[key].child[keyChild].name)
+                        }
+                        list[key].child = name.join('，')
+                        data.push(list[key])
+                    }
+
+
+                    return (
+                        <div>
+                            {
+                                data.map((e, index) => (
+                                    <div key={index}>
+                                        {e.name}（{e.child}）
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    )
+
+                },
+            },
             {
                 title: '产品规格',
                 dataIndex: 'specification',
@@ -94,22 +142,7 @@ export default class approve_quotation extends Component {
                         {record.check_price_order_details != null &&
                             record.check_price_order_details.map((e, index) => (
                                 <div key={index}>
-                                    {/* 显示 */}
-                                    {e.show == 0 &&
-                                        < div >
-                                            <span>
-                                                {e.actual_quote}
-                                                {/* <EditTwoTone className="ml-10" onClick={() => this.isShow(e, index)} /> */}
-                                            </span>
-                                        </div>
-                                    }
-                                    {/* 编辑 */}
-                                    {/* {e.show == 1 &&
-                                        <div key={index} className='mb-5'>
-                                            <Input className="w100 mr-10" value={e.actual_quote}
-                                                onChange={(event) => this.changeaCtualQuote(event, index, e)} onBlur={() => this.onBlurInput(e, index)} />
-                                        </div>
-                                    } */}
+                                    {e.actual_quote}
                                 </div>
                             ))
                         }
@@ -136,6 +169,8 @@ export default class approve_quotation extends Component {
         return_reason: '',
         type: '',
     }
+
+
     componentDidMount() {
         let dataId = common.common.getQueryVariable('id')
         let type = common.common.getQueryVariable('type')
@@ -155,18 +190,9 @@ export default class approve_quotation extends Component {
         }).then(res => {
             if (res.code == 1) {
                 let data = res.data
-                console.log('data: ', data);
-                let proData = res.data.inquiry_order.single_products
-                proData.forEach(e => {
-                    if (e.check_price_order_details.length != 0) {
-                        e.check_price_order_details.forEach(i => {
-                            i.show = 0
-                        })
-                    }
-                });
+                this.getQuotationOrder(data.inquiry_order_id)
                 this.setState({
-                    showData: data,
-                    proList: proData
+                    showData: data
                 })
             } else {
                 message.warning(res.message)
@@ -174,15 +200,19 @@ export default class approve_quotation extends Component {
         })
     }
 
-    isShow() {
-
+    getQuotationOrder(id) {
+        http.get(api.productList + id + '/product/list').then(res => {
+            if (res.code == 1) {
+                let data = res.data.items
+                this.setState({
+                    proList: data
+                })
+            } else {
+                message.warning(res.message)
+            }
+        })
     }
-    changeaCtualQuote() {
 
-    }
-    onBlurInput() {
-
-    }
 
     changeRemark = (e) => {
         this.setState({ return_reason: e.target.value })
@@ -276,8 +306,8 @@ export default class approve_quotation extends Component {
                     </div>
                     <div>
                         <span className="lh-32">
-                            交付地址：
-                            {
+                            交付地址：{showData.inquiry_order.address}
+                            {/* {
                                 showData.delivery_address != null &&
                                 <>
                                     {showData.delivery_address.country}
@@ -286,7 +316,7 @@ export default class approve_quotation extends Component {
                                     {showData.delivery_address.district}
                                     {showData.delivery_address.detail}
                                 </>
-                            }
+                            } */}
 
                         </span>
                     </div>
@@ -324,7 +354,7 @@ export default class approve_quotation extends Component {
                                 </div>
                             }
                         </div>
-                        <div className="but-class">
+                        <div className="but-class-center">
                             <Button type="primary" size='large' onClick={this.commit}>提交</Button>
                         </div>
                     </>

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Table, Button, Select, message, Input, Upload } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
+import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import common from '../../../../public/common'
 import http from '../../../http/index'
 import api from '../../../http/httpApiName'
@@ -24,10 +24,58 @@ class look_quotation extends Component {
                 title: '产品编号',
                 dataIndex: 'number',
             },
-            // {
-            //     title: '产品说明',
-            //     dataIndex: 'address',
-            // },
+            {
+                title: '产品说明',
+                render: (text, record) => {
+                    let show = []
+                    record.options.forEach(e => {
+                        show.push(
+                            {
+                                name: e.param.name,
+                                pid: e.param.id,
+                                child: [
+                                    {
+                                        name: e.name
+                                    }
+                                ]
+                            }
+                        )
+                    })
+                    let list = {}
+                    show.forEach(i => {
+                        if (list[i.pid]) {
+                            list[i.pid].child.push(...i.child)
+                        } else {
+                            list[i.pid] = i
+                        }
+
+                    })
+
+                    let data = []
+                    for (let key in list) {
+                        let name = []
+                        for (let keyChild in list[key].child) {
+                            name.push(list[key].child[keyChild].name)
+                        }
+                        list[key].child = name.join('，')
+                        data.push(list[key])
+                    }
+
+
+                    return (
+                        <div>
+                            {
+                                data.map((e, index) => (
+                                    <div key={index}>
+                                        {e.name}（{e.child}）
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    )
+
+                },
+            },
             {
                 title: '产品规格',
                 dataIndex: 'specification',
@@ -87,13 +135,13 @@ class look_quotation extends Component {
         ],
         proList: [],
         company_id: '',
-        checkDay: 0
+        checkDay: 0,
+        showTitle: {}
     }
 
     componentDidMount() {
         let id = common.common.getQueryVariable('id')
         let typeId = common.common.getQueryVariable('type')
-        console.log('typeId: ', typeId);
         this.setState({
             pageId: id,
             type: typeId
@@ -115,6 +163,7 @@ class look_quotation extends Component {
                 let companyId = data.company_id
                 this.getQuotationOrder(data.inquiry_order_id)
                 this.getCheckData(id)
+                this.getTitleValue(data.pricing_offer_id)
                 this.setState({
                     showData: data,
                     company_id: companyId
@@ -136,8 +185,20 @@ class look_quotation extends Component {
                 message.warning(res.message)
             }
         })
-
     }
+
+    getTitleValue(id) {
+        http.get('/pods/admin/get?id=' + id).then(res => {
+            if (res.code == 1) {
+                let data = res.data
+                this.setState({ showTitle: data })
+            } else {
+                message.warning(res.message)
+            }
+        })
+    }
+
+
 
     getCheckData = (id) => {
         http.get('/quote/order/' + id + '/valid').then(res => {
@@ -152,7 +213,12 @@ class look_quotation extends Component {
 
 
     confirmQuotition = () => {
-        const { pageId } = this.state
+        const { pageId, showData } = this.state
+        if (showData.attaches.length == 0) {
+            message.warning('客户未上传文件，请上传文件')
+            return
+        }
+
         http.get(api.orderConfrim, {
             params: {
                 id: pageId
@@ -196,7 +262,6 @@ class look_quotation extends Component {
         }).then(res => {
             if (res.code == 1) {
                 let data = res.data
-                console.log('data: ', data);
                 data.filename = info.file.name
                 this.saveUpload(data)
             } else {
@@ -210,7 +275,7 @@ class look_quotation extends Component {
         let params = {
             filename: data.filename,
             file_id: data.file_id,
-            storage_location: data.file_path,
+            storage_location: data.location,
             inquiry_order_product_id: 0,
             quotation_order_id: Number(pageId)
         }
@@ -243,7 +308,7 @@ class look_quotation extends Component {
         })
     }
     render() {
-        const { columnsPro, proList, showData, type, checkDay } = this.state
+        const { columnsPro, proList, showData, type, checkDay, showTitle } = this.state
 
         const props = {
             beforeUpload: file => {
@@ -260,16 +325,16 @@ class look_quotation extends Component {
                     <h3 className='db w300 fw'>状态：{showData.status_desc}</h3>
                 </div>
                 <div className='fs mb-15'>
-                    <span className='db w300'>询价单位：</span>
+                    <span className='db w300'>询价单位：{showData.customer_name}</span>
                     <span className='db w300'>询价人：{showData.inquiry_order.customer_representative_name}</span>
-                    <span className='db w300'>电话：{showData.inquiry_order.customer_representative_contact}</span>
-                    <span className='db w300'>邮箱：{showData.inquiry_order.customer_representative_email}</span>
+                    <span className='db w300'>询价人电话：{showData.inquiry_order.customer_representative_contact}</span>
+                    <span className='db w300'>询价人邮箱：{showData.inquiry_order.customer_representative_email}</span>
                 </div>
                 <div className='fs mb-15'>
-                    <span className='db w300'>报价单位：</span>
-                    <span className='db w300'>报价人：{showData.pricing_offer_name}</span>
-                    <span className='db w300'>电话：</span>
-                    <span className='db w300'>邮箱：</span>
+                    <span className='db w300'>报价单位：{showTitle.company_name}</span>
+                    <span className='db w300'>报价人：{showTitle.name}</span>
+                    <span className='db w300'>报价人电话：{showTitle.mobile}</span>
+                    <span className='db w300'>报价人邮箱：{showTitle.email}</span>
                 </div>
                 <div>
                     <Table
@@ -291,18 +356,20 @@ class look_quotation extends Component {
                         <div className='check-day'>
                             <span>{checkDay} </span>
                         </div>
-                        天；
+                        <span style={{ display: 'inline-block', marginTop: '2px' }}>天；</span>
                     </div>
-                    <div>3.付款方式：{showData.inquiry_order.settlement_mode_desc}</div>
+                    <div>3.付款方式：{showData.inquiry_order.settlement_instr}</div>
                     <div>4.品质标椎：以上报价均按照上述所列出的材料，规格，工艺，订单量及同类产品基本品质要求进行报价，如有任何不一致信息或其他特殊要求，敬请提出，我司将按照贵司更新后的信息重新报价。</div>
                 </div>
                 <div className='mt-15'>
                     <div>
                         <div style={{ fontSize: 16, fontWeigt: 600 }} className='fs'>客户确认原件：
                             <div>
-                                <Upload {...props} showUploadList={false}>
-                                    <a>上传文件</a>
-                                </Upload>
+                                {showData.status == 10 &&
+                                    <Upload multiple={true} {...props} showUploadList={false}>
+                                        <Button icon={<UploadOutlined />}>上传文件</Button>
+                                    </Upload>
+                                }
                                 <div>
                                     {showData.attaches.length != 0 &&
                                         showData.attaches.map(e => (

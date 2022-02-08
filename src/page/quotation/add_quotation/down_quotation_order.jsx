@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Table, Button, Select, message, Input } from 'antd';
 import http from '../../../http/index'
 import api from '../../../http/httpApiName'
 import common from '../../../../public/common';
@@ -45,11 +46,34 @@ class down_quotation_order extends Component {
     }
 
 
-    // 询价单详情
+    // 询价单详情  记得做笔记
     getQuotationOrder(id) {
         http.get(api.productList + id + '/product/list').then(res => {
             if (res.code == 1) {
-                let data = res.data.items
+                let data = res.data.items.filter(item => {
+                    let resultMap = {};
+                    item.options.forEach(option => {
+                        if (typeof resultMap[option.param.id] === 'undefined') {
+                            resultMap[option.param.id] = {
+                                name: option.param.name,
+                                child: [option.name]
+                            }
+                        } else {
+                            resultMap[option.param.id]['child'].push(option.name)
+                        }
+                    })
+
+                    let resutlList = [];
+                    for (let key in resultMap) {
+                        resutlList.push(resultMap[key]);
+                    }
+
+                    item.resutlList = resutlList
+
+                    return true
+                })
+
+
                 this.setState({
                     proList: data
                 })
@@ -146,7 +170,7 @@ class down_quotation_order extends Component {
                                 单价/RMB <br />
                                 （含税含运价）
                             </td>
-                            <td>
+                            <td>    
                                 报价合计<br />
                                 （含税含运价）
                             </td>
@@ -163,7 +187,15 @@ class down_quotation_order extends Component {
                                     <td colSpan="2">
                                         {e.number}
                                     </td>
-                                    <td colSpan="2"></td>
+                                    <td colSpan="2">
+                                        {
+                                            e.resutlList.map(i => (
+                                                <div>
+                                                    {i.name}（{i.child.join(',')}）
+                                                </div>
+                                            ))
+                                        }
+                                    </td>
                                     <td colSpan="2" style={{ width: 100 }}>
                                         {e.specification}
                                     </td>

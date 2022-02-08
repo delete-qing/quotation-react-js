@@ -47,9 +47,9 @@ export default class index extends Component {
                 title: '审批人员',
                 render: (text, record) => (
                     <>
-                        {record.approve_records != undefined &&
-                            record.approve_records.map(e => (
-                                <div>
+                        {record.approve_logs.length != 0 &&
+                            record.approve_logs.map(e => (
+                                <div key={e.id}>
                                     {e.approver_name}
                                 </div>
                             ))
@@ -166,6 +166,12 @@ export default class index extends Component {
         this.setState({ pagination })
         this.getList()
     }
+    searchIt = () => {
+        const { pagination } = this.state
+        pagination.current = 1
+        this.setState({ pagination })
+        this.getList()
+    }
     getStatus() {
         http.get(api.quoteStatus).then(res => {
             if (res.code == 1) {
@@ -189,9 +195,7 @@ export default class index extends Component {
         searchData[e.target.name] = e.target.value
         this.setState({ searchData })
     }
-    searchIt = () => {
-        this.getList()
-    }
+
     onChangeInquiryTime = (date, dateString) => {
         const { searchData } = this.state
         searchData.inquiry_date_start = dateString[0]
@@ -369,7 +373,7 @@ export default class index extends Component {
                             <RangePicker style={{ width: '290px' }} placeholder={['开始时间', '结束时间']} onChange={this.onChangeQuoteTime} />
                         </div>
                         <Button type="primary" onClick={this.searchIt}>搜索</Button>
-                        <Button className='ml-10' type="primary" onClick={this.testPage}>勿动</Button>
+                        {/* <Button className='ml-10' type="primary" onClick={this.testPage}>勿动</Button> */}
                     </div>
                     <div className="mt-15 mb-15">
                         <div className="mt-15">

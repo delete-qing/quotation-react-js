@@ -95,7 +95,8 @@ class transfer_order extends Component {
         selectProductList: [],
         selectedRowKeys: [],
         minNum: 0,
-        selectMin: {}
+        selectMin: {},
+        descriptionName: '',
     }
     componentDidMount() {
         let data = common.common.getQueryVariable('id')
@@ -112,7 +113,9 @@ class transfer_order extends Component {
         }).then(res => {
             if (res.code == 1) {
                 let data = res.data
+                console.log('data: ', data);
                 let pData = res.data.inquiry_order.single_products
+                this.getSettlement(data.inquiry_order.settlement_id)
                 pData.forEach(e => {
                     e.checked = false
                     e.check_price_order_details = e.check_price_order_details.filter(i => {
@@ -127,6 +130,22 @@ class transfer_order extends Component {
                     showData: data,
                     proList: pData
                 })
+            } else {
+                message.warning(res.message)
+            }
+        })
+    }
+
+
+    getSettlement(id) {
+        http.get(api.settlementGet, {
+            params: {
+                id: id
+            }
+        }).then(res => {
+            if (res.code == 1) {
+                let data = res.data
+                this.setState({ descriptionName: data.name })
             } else {
                 message.warning(res.message)
             }
@@ -248,10 +267,7 @@ class transfer_order extends Component {
         http.post(api.orderTransfer, params).then(res => {
             if (res.code == 1) {
                 message.success('创建成功')
-
-
                 let history = this.props.history
-
                 setTimeout(() => {
                     common.pathData.getPathData(
                         {
@@ -272,7 +288,7 @@ class transfer_order extends Component {
 
 
     render() {
-        const { columnsPro, proList, showData, selectProductList, selectedRowKeys, selectMin } = this.state
+        const { columnsPro, proList, showData, selectProductList, selectedRowKeys, selectMin, descriptionName } = this.state
 
         const rowSelection = {
             selectedRowKeys,
@@ -358,7 +374,7 @@ class transfer_order extends Component {
                 </div>
                 <div className='mb-15 fs'>
                     <span className='w300 db'>运输方式：{showData.inquiry_order.transport_mode_desc}</span>
-                    <span className='w300 db'>结算方式：{showData.inquiry_order.settlement_mode_desc}</span>
+                    <span className='w300 db'>结算方式：{descriptionName}</span>
                     <span >结算说明：{showData.inquiry_order.settlement_instr}</span>
                 </div>
                 <div className='mb-15 fs'>

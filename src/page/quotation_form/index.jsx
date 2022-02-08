@@ -11,13 +11,13 @@ export default class index extends Component {
     state = {
         columns: [
             {
-                title: '任务编号',
+                title: '工单编号',
                 dataIndex: 'number',
                 width: 200,
                 fixed: 'left',
             },
             {
-                title: '任务状态',
+                title: '状态',
                 dataIndex: 'status_desc',
                 fixed: 'left',
                 width: 150
@@ -74,6 +74,77 @@ export default class index extends Component {
                 ),
             },
             {
+                title: '产品说明',
+                width: 400,
+                render: (text, record) => {
+                    let show = []
+                    record.product.options.forEach(e => {
+                        let remark = ''
+                        if (e.pivot.remark != '') {
+                            remark = '(' + e.pivot.remark + ')'
+                        }
+
+                        show.push(
+                            {
+                                name: e.param.name,
+                                pid: e.param.id,
+                                child: [
+                                    {
+                                        name: e.name + remark
+                                    }
+                                ]
+                            }
+                        )
+                    })
+                    let list = {}
+                    show.forEach(i => {
+                        if (list[i.pid]) {
+                            list[i.pid].child.push(...i.child)
+                        } else {
+                            list[i.pid] = i
+                        }
+
+                    })
+
+                    let data = []
+                    for (let key in list) {
+                        let name = []
+                        for (let keyChild in list[key].child) {
+                            name.push(list[key].child[keyChild].name)
+                        }
+                        list[key].child = name.join('，')
+                        data.push(list[key])
+                    }
+
+
+                    return (
+                        <div>
+                            {
+                                data.map((e, index) => (
+                                    <div key={index}>
+                                        {e.name}（{e.child}）
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    )
+
+                },
+            },
+            {
+                title: '来源属性',
+                render: (text, record) => (
+                    <>
+                        {record.product != null &&
+                            <div>
+                                {record.product.source_attribute_desc}
+                            </div>
+                        }
+                    </>
+
+                ),
+            },
+            {
                 title: '计数单位',
                 render: (text, record) => (
                     <>
@@ -87,134 +158,102 @@ export default class index extends Component {
                 ),
             },
             {
-                title: '包装要求',
-                width: 500,
+                title: '客户名称',
+                dataIndex: 'customer_name',
+            },
+            {
+                title: '工单生成时间',
+                dataIndex: 'created_at',
+            },
+            {
+                title: '工单图纸',
                 render: (text, record) => (
                     <>
-                        {record.product != null &&
-                            <div>
-                                {record.product.pack_units.map((e, index) => (
-                                    <div key={index}>
-                                        <span style={{ display: 'inline-block', marginRight: '10px' }}>
-                                            {e.level}级包装单位：{e.name}，
-                                        </span>
-                                        {e.pack_material != null &&
-
-                                            <span style={{ display: 'inline-block', marginRight: '10px' }}>
-                                                包装材质：{e.pack_material.name}，
-                                            </span>
-                                        }
-                                        <span style={{ display: 'inline-block', marginRight: '10px' }}>
-                                            包装容量：{e.capacity_type == 1 ? '固定数量' : '工程定义'}，
-                                        </span>
-                                        {e.capacity_type == 1 &&
-                                            <span style={{ display: 'inline-block', marginRight: '10px' }}>
-                                                固定数量：{e.capacity_value}
-                                            </span>
-                                        }
-
-                                    </div>
-                                ))
-                                }
-                            </div>
-                        }
+                        <div>{record.project_file_person_name}</div>
+                        <div>{record.project_commit_at}</div>
                     </>
 
                 ),
             },
             {
-                title: '询价数量',
+                title: 'PE配置',
                 render: (text, record) => (
                     <>
-                        {record.product != null &&
-                            <div>
-                                {record.product.quantities.map((e, index) => (
-                                    <div key={index}>
-                                        {e.quantity}{e.unit}
-                                    </div>
-                                ))}
-                            </div>
-                        }
+                        <div>{record.pe_person_name}</div>
+                        <div>{record.pe_commit_at}</div>
                     </>
 
                 ),
             },
             {
-                title: 'PE人员',
-                dataIndex: 'pe_person_name',
-            },
-            {
-                title: 'PE完成时间',
-                dataIndex: 'pe_finish_duration',
-            },
-            {
-                title: 'IE人员',
-                dataIndex: 'ie_person_name',
-            },
-            {
-                title: 'IE完成时间',
-                dataIndex: 'ie_finish_duration',
+                title: 'IE规划',
+                render: (text, record) => (
+                    <>
+                        <div>{record.ie_person_name}</div>
+                        <div>{record.ie_commit_at}</div>
+                    </>
+
+                ),
             },
             {
                 title: '操作',
                 fixed: 'right',
-                width: 150,
-                render: (text, record) => (
-                    <div>
+                width: 160,
+                render: (text, record) => {
+                    let distribute
+                    let peConfig
+                    let ieConfig
+                    let project
+                    let preview
+                    let commitPage
+
+                    if (record.status == 1 || record.status == 2 || record.status == 3 || record.status == 4 || record.status == 5 || record.status == 10) {
+                        distribute = <a onClick={() => this.distribute(record)}>任务分配</a>
+                    } else {
+                        distribute = <a style={{ color: '#ccc' }}>任务分配</a>
+                    }
+
+                    if (record.status == 2 || record.status == 3 || record.status == 4 || record.status == 5) {
+                        peConfig = <a onClick={() => this.goPeConfig(record)}>BOM配置</a>
+                    } else {
+                        peConfig = <a style={{ color: '#ccc' }}>BOM配置</a>
+                    }
+
+                    if (record.status == 10 && record.product.source_attribute == 1 && record.project_file_person_id != 0) {
+                        project = <a onClick={() => this.goProject(record)}>工程图纸</a>
+                    } else {
+                        project = <a style={{ color: '#ccc' }}>工程图纸</a>
+                    }
+
+                    if (record.status != 1) {
+                        preview = <a onClick={() => this.goPreview(record, 5)}>BOM预览</a>
+                    } else {
+                        preview = <a style={{ color: '#ccc' }}>BOM预览</a>
+                    }
+
+                    if (record.status == 4) {
+                        commitPage = <a onClick={() => this.goPreview(record, 6)}>待BOM提交</a>
+                    } else {
+                        commitPage = <a style={{ color: '#ccc' }}>待BOM提交</a>
+                    }
+                    return (
                         <div>
-                            <a onClick={() => this.goConfig(record)}>查看</a>
-                            <Divider type="vertical" />
-                            {record.status == 1 &&
-                                <a onClick={() => this.distribute(record)}>任务分配</a>
-                            }
-                            {record.status != 1 &&
-                                <a style={{ color: '#ccc' }}>任务分配</a>
-                            }
+                            <span className='db'>{distribute}</span>
+                            <span className='db'>{project}</span>
+                            <span className='db'>{peConfig}</span>
+                            <span className='db'>{ieConfig}</span>
+                            <span className='db'>{commitPage}</span>
+                            <span className='db'>{preview}</span>
                         </div>
-                        {
-                            (() => {
-                                if (record.status == 2 || record.status == 3) {
-                                    return <>
-                                        <a onClick={() => this.goPeConfig(record)}>PE配置</a>
-                                    </>
-                                } else {
-                                    return <>
-                                        <a style={{ color: '#ccc' }}>PE配置</a>
-                                    </>
-                                }
-                            })()
-                        }
-                        {
-                            (() => {
-                                if (record.status == 4 || record.status == 5) {
-                                    return <>
-                                        <Divider type="vertical" />
-                                        <a onClick={() => this.goEeConfig(record)}>IE规划</a>
-                                    </>
-                                } else {
-                                    return <>
-                                        <Divider type="vertical" />
-                                        <a style={{ color: '#ccc' }}>IE规划</a>
-                                    </>
-                                }
-                            })()
-                        }
+                    )
 
-
-                    </div>
-                ),
+                },
             },
         ],
-        list: [
-            {
-                quantities: [],
-                pack_units: []
-            }
-        ],
+        list: [],
         personnelData: [],
         isModalVisible: false,
-        PEID: '',
-        IEID: '',
+
         listId: '',
         satusData: [],
         searchData: {
@@ -232,14 +271,16 @@ export default class index extends Component {
             pageSize: 10,
         },
         pageSizeOptions: [5, 10, 15, 20],
+        showData: {
+            product: {},
+        },
+        listProject: []
 
     }
     componentDidMount() {
         this.getList()
         this.getPersonnel()
         this.getStatus()
-        let pageHeigth = document.body.scrollHeight;
-        console.log('pageHeigth: ', pageHeigth);
     }
     getList() {
         const { pagination, searchData } = this.state
@@ -277,6 +318,12 @@ export default class index extends Component {
         this.getList()
     }
 
+    searchIt = () => {
+        const { pagination } = this.state
+        pagination.current = 1
+        this.setState({ pagination })
+        this.getList()
+    }
     getStatus() {
         http.get(api.bomStatus).then(res => {
             if (res.code == 1) {
@@ -291,50 +338,69 @@ export default class index extends Component {
         http.get(api.adminList).then(res => {
             if (res.code == 1) {
                 let data = res.data.items
-                this.setState({ personnelData: data })
+
+                let listProject = common.clone.deepClone(data)
+                listProject.push(
+                    {
+                        id: 0,
+                        name: '忽略'
+                    }
+                )
+                this.setState({ personnelData: data, listProject })
             } else {
                 message.warning(res.message);
             }
         })
     }
     distribute = (data) => {
-        console.log('data: ', data);
-        // let history = this.props.history
-        // common.pathData.getPathData(
-        //     {
-        //         path: '/PeConfig?id=' + data.id,
-        //         data: {
-        //             id: data.id,
-        //             type: 1
-        //         },
-        //         history: history
-        //     }
-        // )
+        if (data.pe_person_id == 0) {
+            data.pe_person_id = ''
+        }
+        if (data.ie_person_id == 0) {
+            data.ie_person_id = ''
+        }
         this.setState({
             isModalVisible: true,
-            listId: data.id
+            listId: data.id,
+            showData: data
         })
     }
     handleChangePE = (value) => {
-        this.setState({ PEID: value })
+        const { showData } = this.state
+        showData.pe_person_id = value
+        this.setState({ showData })
     }
     handleChangeIE = (value) => {
-        this.setState({ IEID: value })
+        const { showData } = this.state
+        showData.ie_person_id = value
+        this.setState({ showData })
+    }
+    handleChangeProject = (value) => {
+        const { showData } = this.state
+        showData.project_file_person_id = value
+        this.setState({ showData })
     }
     handleOk = () => {
-        const { listId, PEID, IEID, isModalVisible } = this.state
+        const { listId, showData } = this.state
         let params = {
             id: listId,
-            pe_person_id: PEID,
-            ie_person_id: IEID
+            pe_person_id: showData.pe_person_id,
+            ie_person_id: showData.ie_person_id,
+            project_file_person_id: showData.project_file_person_id,
         }
+        console.log('params: ', params);
         if (params.pe_person_id == '') {
             message.warning('请选择PE人员')
             return
         } else if (params.ie_person_id == '') {
             message.warning('请选择IE人员')
             return
+        } else if (typeof params.project_file_person_id == null) {
+            message.warning('请选择工程图纸')
+            return
         }
+
+
         http.post(api.bomAssign, params).then(res => {
             if (res.code == 1) {
                 message.success('设置成功')
@@ -374,10 +440,23 @@ export default class index extends Component {
             }
         )
     }
+    goPreview(data, type) {
+        let history = this.props.history
+        common.pathData.getPathData(
+            {
+                // path: '/PeConfig?id=' + data.id,
+                data: {
+                    id: data.id,
+                    type: type
+                },
+                history: history
+            }
+        )
 
-    searchIt = () => {
-        this.getList()
     }
+
+
+
     handleChangeStatus = (value) => {
         const { searchData } = this.state
         searchData.status = value
@@ -390,54 +469,36 @@ export default class index extends Component {
         this.setState({ searchData })
     }
 
-    goConfig(data) {
+    // 工程图纸
+    goProject(data) {
         let history = this.props.history
-        if (data.status == 2 || data.status == 3 || data.status == 6 || data.status == 7 || data.status == 8 || data.status == 9) {
-            common.pathData.getPathData(
-                {
-                    // path: '/PeConfig?id=' + data.id,
-                    data: {
-                        id: data.id,
-                        type: 1
-                    },
-                    history: history
-                }
-            )
+        common.pathData.getPathData(
+            {
+                path: '/project?id=' + data.id,
+                data: {
+                    id: data.id,
+                    type: 4
+                },
+                history: history
+            }
+        )
 
-        } else if (data.status == 4 || data.status == 5) {
-            common.pathData.getPathData(
-                {
-                    // path: '/PeConfig?id=' + data.id,
-                    data: {
-                        id: data.id,
-                        type: 2
-                    },
-                    history: history
-                }
-            )
-        } else if (data.status == 1) {
-            common.pathData.getPathData(
-                {
-                    path: '/home',
-                    data: {
-                        type: 3
-                    },
-                    history: history
-                }
-            )
-        }
     }
-    render() {
-        const { columns, list, isModalVisible, personnelData, satusData, pagination, pageSizeOptions, } = this.state
-        const { Option } = Select;
 
+    render() {
+        const { columns, list, isModalVisible, personnelData, satusData, pagination, pageSizeOptions, showData, listProject } = this.state
+        const { Option } = Select;
+        let isProject = false
+        if (!showData.project_commit_at == null) {
+            isProject = true
+        }
         return (
             <div>
                 <div className="page">
                     <div className="fs mb-15">
                         <div className="mr-20">
-                            <span>任务编号：</span>
-                            <Input name="number" onChange={this.changeInput} className="w200" placeholder="请输入任务编号" />
+                            <span>工单编号：</span>
+                            <Input name="number" onChange={this.changeInput} className="w200" placeholder="请输入工单编号" />
                         </div>
                         <div className="mr-20">
                             <span>相关单号：</span>
@@ -483,25 +544,52 @@ export default class index extends Component {
                     </div>
                 </div>
                 <div>
-                    <Modal title="任务分配" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel} cancelText="取消" okText="确定">
-                        <div>
-                            <span style={{ display: 'inline-block', width: '35px' }}>
-                                PE：
-                            </span>
-                            <Select style={{ width: '260px' }} onChange={this.handleChangePE}>
-                                {
-                                    personnelData.map(e => (
-                                        <Option key={e.id} value={e.id}>{e.name}</Option>
-                                    ))
-                                }
+                    <Modal title="任务分配" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel}
+                        cancelText="取消" okText="确定" width={600}>
+                        <div className='mb-15'>
+                            <div className='fs'>
+                                <div className='mb-15' style={{ marginRight: 100 }}>
+                                    <span style={{ display: 'inline-block', width: '70px', textAlign: 'right' }}>
+                                        工程单号：
+                                    </span>
+                                    {showData.number}
+                                </div>
 
-                            </Select>
+                                <div className='mb-15'>
+                                    <span style={{ display: 'inline-block', width: '70px', textAlign: 'right' }}>
+                                        产品编号：
+                                    </span>
+                                    {showData.product.number}
+                                </div>
+                            </div>
+
+                            <div className='mb-15'>
+                                <span style={{ display: 'inline-block', width: '70px', textAlign: 'right' }}>
+                                    产品名称：
+                                </span>
+                                {showData.product.name}
+                            </div>
                         </div>
+
                         <div className="mt-15">
-                            <span style={{ display: 'inline-block', width: '35px' }}>
-                                IE：
+                            <span style={{ display: 'inline-block', width: '70px', textAlign: 'right' }}>
+                                工程图纸：
                             </span>
-                            <Select style={{ width: '260px' }} onChange={this.handleChangeIE}>
+                            <Select style={{ width: '260px' }} onChange={this.handleChangeProject} value={showData.project_file_person_id} disabled={isProject}>
+                                {
+                                    listProject.map(e => (
+                                        <Option key={e.id} value={e.id}>{e.name}</Option>
+                                    ))
+                                }
+
+                            </Select>
+                        </div>
+
+                        <div className="mt-15">
+                            <span style={{ display: 'inline-block', width: '70px', textAlign: 'right' }}>
+                                PE配置：
+                            </span>
+                            <Select style={{ width: '260px' }} onChange={this.handleChangePE} value={showData.pe_person_id} disabled={!showData.pe_commit_at == null}>
                                 {
                                     personnelData.map(e => (
                                         <Option key={e.id} value={e.id}>{e.name}</Option>
@@ -510,6 +598,21 @@ export default class index extends Component {
 
                             </Select>
                         </div>
+
+                        <div className="mt-15">
+                            <span style={{ display: 'inline-block', width: '70px', textAlign: 'right' }} >
+                                IE规划：
+                            </span>
+                            <Select style={{ width: '260px' }} onChange={this.handleChangeIE} value={showData.ie_person_id} disabled={!showData.ie_commit_at == null}>
+                                {
+                                    personnelData.map(e => (
+                                        <Option key={e.id} value={e.id}>{e.name}</Option>
+                                    ))
+                                }
+
+                            </Select>
+                        </div>
+
 
                     </Modal>
                 </div>

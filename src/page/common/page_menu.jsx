@@ -5,7 +5,6 @@ import { AppstoreOutlined, MailOutlined, SettingOutlined } from '@ant-design/ico
 import './page_menu.css'
 
 class index extends Component {
-
     state = {
         rootSubmenuKeys: [],
     }
@@ -27,7 +26,9 @@ class index extends Component {
                                         <Menu.Item key="12">
                                             <Link to={'Quotation'}>报价单</Link>
                                         </Menu.Item>
-                                        {/* <Menu.Item key="13">报价单</Menu.Item> */}
+                                        <Menu.Item key="13">
+                                            <Link to={'productList'}> 产品</Link>
+                                        </Menu.Item>
                                     </SubMenu>
                                     <SubMenu key="2" title="产品核价">
                                         <Menu.Item key="21">
@@ -63,6 +64,7 @@ class index extends Component {
                             <div style={{ height: '100vh' }}>
                                 {this.props.children}
                             </div>
+
                         </Content >
                     </Layout>
 

@@ -48,7 +48,7 @@ export default class Hello extends Component {
         width: 300,
         render: (text, record) => (
           <div>
-            {record.single_products.lenght != 0 &&
+            {record.single_products.length != 0 &&
               record.single_products.map(e => (
                 <div key={e.id}>
                   {e.name}
@@ -62,18 +62,45 @@ export default class Hello extends Component {
         title: '操作',
         render: (text, record) => {
           let flag
+          let isEdit
           if (record.status == 2) {
             flag = <a onClick={() => this.goDistribute(record)}>分配</a>
           } else {
             flag = <a style={{ color: '#ccc' }}>分配</a>
           }
+
+          if (record.status == 1) {
+            isEdit = <a onClick={() => this.goLookInquiryList(record)}>编辑</a>
+          } else {
+            isEdit = <a style={{ color: '#ccc' }}>编辑</a>
+          }
+
           return (
             <>
-              <a onClick={() => this.goLookInquiryList(record)}>查看</a>
+              <a onClick={() => this.goLookPage(record)}>查看</a>
+              <Divider type="vertical" />
+              {isEdit}
               <Divider type="vertical" />
               {flag}
               <Divider type="vertical" />
-              <a style={{ color: 'red' }} onClick={() => this.deleteIt(record.id)}>删除</a>
+              <Popconfirm
+                title="您确定要删除当条询价单么？"
+                onConfirm={() => this.deleteIt(record.id)}
+                okText="是"
+                cancelText="否"
+              >
+                <a style={{ color: 'red' }}>删除</a>
+              </Popconfirm>
+              <Divider type="vertical" />
+              <Popconfirm
+                title="您确定要取消当条询价单么？"
+                onConfirm={() => this.cancelIt(record.id)}
+                okText="是"
+                cancelText="否"
+              >
+                <a style={{ color: 'red' }}>取消</a>
+              </Popconfirm>
+
             </>
           )
 
@@ -136,7 +163,6 @@ export default class Hello extends Component {
       http.get(api.orderStatus)
     ]).then(axios.spread((res, res1) => {
       if (res.code == 1) {
-        console.log();
         let data = res.data.items;
         pagination.total = res.data.total
         this.setState({
@@ -159,6 +185,16 @@ export default class Hello extends Component {
     this.setState({ pagination })
     this.getList()
   }
+  serchIt = () => {
+    const { pagination } = this.state
+    pagination.current = 1
+    this.setState({ pagination })
+    this.getList()
+  }
+
+  confirm = () => {
+
+  }
   deleteIt = (id) => {
     http.get(api.orderDelete, {
       params: {
@@ -173,7 +209,22 @@ export default class Hello extends Component {
       }
     })
   }
-  // 查看
+
+  cancelIt = (id) => {
+    http.get(api.inquiryCancel, {
+      params: {
+        id: id
+      }
+    }).then(res => {
+      if (res.code == 1) {
+        message.success('取消成功');
+        this.getList()
+      } else {
+        message.warning(res.message);
+      }
+    })
+  }
+  // 编辑
   goLookInquiryList(data) {
     let history = this.props.history
     path.pathData.getPathData(
@@ -187,7 +238,20 @@ export default class Hello extends Component {
       }
     )
   }
-
+  // 查看
+  goLookPage(data) {
+    let history = this.props.history
+    path.pathData.getPathData(
+      {
+        path: '/lookPage?id=' + data.id,
+        data: {
+          type: 4,
+          id: data.id
+        },
+        history: history
+      }
+    )
+  }
   addListData = () => {
     let history = this.props.history
     path.pathData.getPathData(
@@ -205,7 +269,6 @@ export default class Hello extends Component {
   }
   // 分配
   goDistribute(data) {
-    console.log(data);
     let history = this.props.history
     path.pathData.getPathData(
       {
@@ -226,9 +289,7 @@ export default class Hello extends Component {
     this.setState({ serchData })
   }
 
-  serchIt = () => {
-    this.getList()
-  }
+
 
   onSerchStatus = (value) => {
     const { serchData } = this.state
@@ -251,6 +312,8 @@ export default class Hello extends Component {
     this.setState({ serchData })
     this.getList()
   }
+
+
 
   render() {
     const { columns, statusArr, typeArr, pagination, pageSizeOptions, } = this.state

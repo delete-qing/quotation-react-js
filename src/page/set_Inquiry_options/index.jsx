@@ -3,6 +3,7 @@ import { Table, Switch, Button, Modal, Input, Divider, Select, message, Popconfi
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import http from '../../http/index'
 import api from "../../http/httpApiName";
+import common from '../../../public/common'
 import './index.css'
 
 class index extends Component {
@@ -22,6 +23,12 @@ class index extends Component {
                         record.options.map((e, index) => {
                             return (<div key={index}>
                                 {e.name}
+                                {e.remark != '' &&
+                                    <>
+                                        （{e.remark}）
+                                    </>
+                                }
+
                             </div>)
                         })
                     }
@@ -118,7 +125,6 @@ class index extends Component {
         http.get(api.inquiryDelete, {
             params: {
                 id: record.id,
-
             }
         }).then(res => {
             if (res.code == 1) {
@@ -131,6 +137,7 @@ class index extends Component {
         })
     }
     editData(data) {
+        console.log(data);
         this.setState({
             id: data.id,
             name: data.name,
@@ -149,13 +156,10 @@ class index extends Component {
         })
     }
     getInputValue = (e, index) => {
-        const { optionName, name } = this.state
-        optionName.forEach((i, index1) => {
-            if (index == index1) {
-                i.name = e.target.value
-            }
-        });
-        this.setState({ optionName })
+        const { optionName } = this.state
+        let data = common.clone.deepClone(optionName)
+        data[index].name = e.target.value
+        this.setState({ optionName: data })
     }
     getInputNameValue(e) {
         const { name } = this.state
@@ -170,9 +174,14 @@ class index extends Component {
         let nameArr = []
         optionName.forEach(e => {
             nameArr.push({
-                name: e.name
+                id: e.id,
+                name: e.name,
+                has_remark: e.has_remark,
+                remark: e.remark
             })
         })
+
+
         let params = {
             name: name,
             is_usage: true,
@@ -180,6 +189,8 @@ class index extends Component {
             options: nameArr,
             id: id,
         }
+
+
         let url
         if (typeof id == 'undefined') {
             url = api.create
@@ -202,15 +213,13 @@ class index extends Component {
             }
         })
 
-
-
     }
     handleCancel = () => {
         this.setState({
             isModalVisible: false
         })
     }
-    cutData(index) {
+    cutData = (index) => {
         const { optionName } = this.state
         optionName.splice(index, 1)
         this.setState({ optionName })
@@ -219,12 +228,27 @@ class index extends Component {
         const { optionName } = this.state
         optionName.push(
             {
-                name: ''
+                id: 0,
+                name: '',
+                has_remark: '',
+                remark: '',
             }
         )
         this.setState({ optionName })
     }
-
+    // 改变开关
+    onChangeSwitch = (checked, index) => {
+        const { optionName } = this.state
+        let data = common.clone.deepClone(optionName)
+        data[index].has_remark = checked
+        this.setState({ optionName: data })
+    }
+    onchangeRemark = (e, index) => {
+        const { optionName } = this.state
+        let data = common.clone.deepClone(optionName)
+        data[index].remark = e.target.value
+        this.setState({ optionName: data })
+    }
 
     render() {
         const { list, isModalVisible, optionName, columns, name, selectId, options } = this.state
@@ -233,7 +257,10 @@ class index extends Component {
         if (optionName.length == 0) {
             optionName.push(
                 {
-                    name: ''
+                    id: 0,
+                    name: '',
+                    has_remark: '',
+                    remark: '',
                 }
             )
         }
@@ -249,7 +276,7 @@ class index extends Component {
                         <Table rowKey={record => record.id} columns={columns} dataSource={list} />
                     </div>
                     <div>
-                        <Modal title="新建" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel} okText="确定" cancelText="取消" destroyOnClose="true">
+                        <Modal title="新建" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel} okText="确定" cancelText="取消" destroyOnClose="true" width={800}>
                             <div>
                                 <div className="mb-15">
                                     <span>参数名称：</span>
@@ -270,11 +297,20 @@ class index extends Component {
                                     <div>
                                         {
                                             optionName.map((e, index) => (
-                                                <div className="mt-15" key={index}>
-                                                    <span>选项名称：</span>
-                                                    <Input onChange={e => this.getInputValue(e, index)} defaultValue={e.name} className="w200" />
-                                                    <MinusCircleOutlined onClick={e => this.cutData(index)} style={{ fontSize: '18px', marginLeft: '15px' }} />
-                                                    <PlusCircleOutlined onClick={this.addData} style={{ fontSize: '18px', marginLeft: '15px' }} />
+                                                <div className="mt-15 fs" key={index}>
+                                                    <div className='mr-15' >
+                                                        <span>选项名称：</span>
+                                                        <Input onChange={event => this.getInputValue(event, index)} value={e.name} className="w200" />
+                                                    </div>
+                                                    <div>
+                                                        <span className='lh-32'>备注：</span>
+                                                        <Switch defaultChecked={e.has_remark} size="small" onChange={(e) => this.onChangeSwitch(e, index)} />
+                                                        {e.has_remark &&
+                                                            <Input value={e.remark} className="w200 ml-10" onChange={(e) => this.onchangeRemark(e, index)} />
+                                                        }
+                                                    </div>
+                                                    <MinusCircleOutlined onClick={() => this.cutData(index)} style={{ fontSize: '18px', marginLeft: '15px', lineHeight: '32px', marginTop: '4px' }} />
+                                                    <PlusCircleOutlined onClick={this.addData} style={{ fontSize: '18px', marginLeft: '15px', lineHeight: '32px', marginTop: '4px' }} />
                                                 </div>
                                             ))
                                         }

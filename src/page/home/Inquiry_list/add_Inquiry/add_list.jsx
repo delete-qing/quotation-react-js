@@ -15,7 +15,7 @@ class add_list extends Component {
         options: [
             {
                 id: 1,
-                name: '意向询价'
+                name: '阶梯询价'
             },
             {
                 id: 2,
@@ -66,20 +66,79 @@ class add_list extends Component {
                 dataIndex: 'number',
             },
             {
+                title: '产品说明',
+                width: 200,
+                render: (text, record) => {
+                    let show = []
+                    record.options.forEach(e => {
+                        let remark = ''
+                        if (e.pivot.remark != '') {
+                            remark = '(' + e.pivot.remark + ')'
+                        }
+                        show.push(
+                            {
+                                name: e.param.name,
+                                pid: e.param.id,
+                                remark: e.remark,
+                                child: [
+                                    {
+                                        name: e.name + remark
+                                    }
+                                ]
+                            }
+                        )
+                    })
+                    let list = {}
+                    show.forEach(i => {
+                        if (list[i.pid]) {
+                            list[i.pid].child.push(...i.child)
+                        } else {
+                            list[i.pid] = i
+                        }
+
+                    })
+
+                    let data = []
+                    for (let key in list) {
+                        let name = []
+                        for (let keyChild in list[key].child) {
+                            name.push(list[key].child[keyChild].name)
+                        }
+                        list[key].child = name.join('，')
+                        data.push(list[key])
+                    }
+
+                    return (
+                        <div>
+                            {
+                                data.map((e, index) => (
+                                    <div key={index}>
+                                        {e.name}（{e.child}）
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    )
+                }
+            },
+            {
                 title: '产品名称',
+                width: 200,
                 dataIndex: 'name',
             },
             {
                 title: '产品规格',
+                width: 150,
                 dataIndex: 'specification',
             },
             {
                 title: '计数单位',
+                width: 100,
                 dataIndex: 'unit',
             },
             {
                 title: '包装要求',
-                width: 450,
+                width: 300,
                 render: (text, record) => (
                     <div>
                         {
@@ -111,6 +170,7 @@ class add_list extends Component {
             },
             {
                 title: '询价数量',
+                width: 100,
                 render: (text, record) => (
                     <div>
                         {
@@ -126,11 +186,11 @@ class add_list extends Component {
             },
             {
                 title: '样品编号',
+                width: 150,
                 dataIndex: 'sample_number',
             },
             {
                 title: '附件',
-                width: 200,
                 render: (text, record) => (
                     <div>
                         {record.attaches.length != 0 &&
@@ -145,16 +205,17 @@ class add_list extends Component {
             },
             {
                 title: '操作',
+                width: 150,
                 render: (text, record) => (
                     <div>
-                        {record.status == 1 &&
+                        {record.type == 1 &&
                             <div>
                                 <a onClick={() => this.editPro(record)}>编辑</a>
                                 <Divider type="vertical" />
                                 <a style={{ color: 'red' }} onClick={() => this.deletePro(record.id)}>删除</a>
                             </div>
                         }
-                        {record.status != 1 &&
+                        {record.type != 1 &&
                             <div>
                                 <a style={{ color: '#ccc' }}>编辑</a>
                                 <Divider type="vertical" />
@@ -180,12 +241,8 @@ class add_list extends Component {
             settlement_mode: '',
             settlement_id: '',
             settlement_instr: '',
-            delivery_address: {
-                province: '',
-                city: '',
-                district: '',
-                detail: '',
-            }
+            delivery_address: null,
+            single_products: []
         },
         adressData: [],
         disabledButAdd: true,
@@ -243,7 +300,9 @@ class add_list extends Component {
                     data.settlement_instr = '100%现付'
                 }
                 this.getsettlementType(data.customer_id)
-                console.log('data.customer_id: ', data.customer_id);
+                this.getCheckOrderProduct(data.id, data.status)
+
+                console.log('data.customer_id: ', data);
                 this.setState({
                     showData: data,
                     company_id: data.company_id
@@ -252,7 +311,18 @@ class add_list extends Component {
                 message.warning(res.message);
             }
         })
-
+    }
+    // 询价单产品
+    getCheckOrderProduct(id, type) {
+        http.get('/inquiry/order/get/' + id + '/product/list').then(res => {
+            if (res.code == 1) {
+                let data = res.data.items
+                data.type = type
+                this.setState({ list: data })
+            } else {
+                message.warning(res.message);
+            }
+        })
     }
     // 获取结算方式
     getsettlementType(id) {
@@ -268,8 +338,8 @@ class add_list extends Component {
                 message.warning(res.message)
             }
         })
-
     }
+
     // 获取客户名称
     getCustomerList() {
         http.get(api.customerList).then(res => {
@@ -314,7 +384,7 @@ class add_list extends Component {
     showConfirm = () => {
         const { confirm } = Modal;
         let _that = this
-        let { customerId, salespersonId, type, telephone, pageId, saveData } = this.state
+        let { customerId, salespersonId, type, pageId, saveData } = this.state
         let params = {
             customer_id: customerId,
             type: type,
@@ -323,6 +393,28 @@ class add_list extends Component {
             customer_representative_contact: saveData.customer_representative_contact,
             customer_representative_email: saveData.customer_representative_email
 
+        }
+        if (params.customer_id == '') {
+            message.warning('请选择客户名称')
+            return
+        } else if (params.type == '') {
+            message.warning('请选择询价类型')
+            return
+
+        } else if (params.salesperson_id == '') {
+            message.warning('请选择销售人员')
+            return
+        } else if (params.customer_representative_name == '') {
+            message.warning('请填写询价人员')
+            return
+
+        } else if (params.customer_representative_contact == '') {
+            message.warning('请填写询价人联系电话')
+            return
+
+        } else if (params.customer_representative_email == '') {
+            message.warning('请填写询价人邮箱地址')
+            return
         }
 
         confirm({
@@ -625,7 +717,7 @@ class add_list extends Component {
     render() {
         // 选择器
         const { options, paymentMethod, transportationMethod, settlementMethod, adressData,
-            columnsIndependence, customerData, adminList, pageId,
+            columnsIndependence, customerData, adminList, pageId, list,
             showData, disabledButAdd } = this.state
         const Option = Select.Option;
         const { TextArea } = Input;
@@ -637,10 +729,9 @@ class add_list extends Component {
             <div id="currentPage" className="page">
                 {pageId == '' &&
                     <div>
-
                         <div className='fs mb-15'>
                             <div className="title-input">
-                                <span>客户名称：</span>
+                                <span className='w80'> <span className='c-red'>*</span> 客户名称：</span>
                                 <Select style={{ width: 200 }} onChange={this.handleChangeCustomer} placeholder="请选择">
                                     {customerData.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
                                 </Select>
@@ -650,13 +741,13 @@ class add_list extends Component {
                         <div className='fs mb-15'>
 
                             <div className="title-input">
-                                <span>询价类型：</span>
+                                <span className='w80'><span className='c-red'>*</span> 询价类型：</span>
                                 <Select style={{ width: 200 }} onChange={this.handleChangeOption} placeholder="请选择">
                                     {options.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
                                 </Select>
                             </div>
                             <div className="title-input">
-                                <span>销售人员：</span>
+                                <span className='w80'><span className='c-red'>*</span> 销售人员：</span>
                                 <Select style={{ width: 200 }} onChange={this.handleChangeAdmin} placeholder="请选择">
                                     {adminList.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
                                 </Select>
@@ -666,17 +757,17 @@ class add_list extends Component {
 
                         <div className='fs mb-15'>
                             <div className="title-input">
-                                <span>询价人员：</span>
+                                <span className='w80'><span className='c-red'>*</span> 询价人员：</span>
                                 <Input name="customer_representative_name" onChange={this.handleChangeTelephone} style={{ width: 200 }}
                                     placeholder="请输询价人员" />
                             </div>
                             <div className="title-input">
-                                <span>联系电话：</span>
+                                <span className='w80'><span className='c-red'>*</span> 联系电话：</span>
                                 <Input name="customer_representative_contact" onChange={this.handleChangeTelephone} style={{ width: 200 }}
                                     placeholder="请输联系电话" />
                             </div>
                             <div className="title-input">
-                                <span>邮箱地址：</span>
+                                <span className='w80'><span className='c-red'>*</span> 邮箱地址：</span>
                                 <Input name="customer_representative_email" onChange={this.handleChangeTelephone} style={{ width: 200 }}
                                     placeholder="请输邮箱地址" />
                             </div>
@@ -696,9 +787,10 @@ class add_list extends Component {
                         <div className='mb-15 fs'>
                             <span>
                                 客户名称：
-                                <Tooltip placement="bottomLeft" title={showData.customer_name}>
-                                    {showData.customer_name}
-                                </Tooltip>
+                                {showData.customer_name}
+                                {/* <Tooltip placement="bottomLeft" title={showData.customer_name}>
+
+                                </Tooltip> */}
                             </span>
                         </div>
                         <div className='mb-15 fs'>
@@ -709,14 +801,13 @@ class add_list extends Component {
                                 询价类型：{showData.type_desc}
                             </span>
                             <span className="title-block w300">
-                                询价人员：{showData.customer_representative_name}
+                                销售人员：{showData.salesperson_name}
                             </span>
                         </div>
                         <div className='mb-15'>
                             <span className="title-block w300">
-                                销售人员：{showData.salesperson_name}
+                                询价人员：{showData.customer_representative_name}
                             </span>
-
                             <span className="title-block w300">
                                 联系电话：{showData.customer_representative_contact}
                             </span>
@@ -728,10 +819,7 @@ class add_list extends Component {
                 }
 
                 <div className="min-block mt-15">
-
-
                     <div>
-
                         {showData.status == 1 &&
                             <div>
                                 <span>
@@ -742,95 +830,101 @@ class add_list extends Component {
                         }
                         <div className="mt-15">
                             <Table rowKey={record => record.id} columns={columnsIndependence}
-                                dataSource={showData.single_products} bordered pagination={false} />
+                                dataSource={list} bordered pagination={false} />
                         </div>
                     </div>
                 </div>
-                <div className="min-block mt-15">
-                    <div className="title">
-                        <div className="mr-30">
-                            <span>交付方式：</span>
-                            <Select style={{ width: 300 }} onChange={this.changePaymentMethod} value={showData.delivery_mode}>
-                                {paymentMethod.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
-                            </Select>
-                        </div>
 
-                        <div className="mr-30">
-                            <span>运输方式：</span>
-                            <Select style={{ width: 300 }} onChange={this.changTransport} value={showData.transport_mode}>
-                                {transportationMethod.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
-                            </Select>
+
+
+                {showData.single_products.length > 0 &&
+                    <div>
+                        <div className="min-block mt-15">
+                            <div className="title">
+                                <div className="mr-30">
+                                    <span className='w80'><span className='c-red'>*</span> 交付方式：</span>
+                                    <Select style={{ width: 300 }} onChange={this.changePaymentMethod} value={showData.delivery_mode}>
+                                        {paymentMethod.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
+                                    </Select>
+                                </div>
+
+                                <div className="mr-30">
+                                    <span className='w80'><span className='c-red'>*</span> 运输方式：</span>
+                                    <Select style={{ width: 300 }} onChange={this.changTransport} value={showData.transport_mode}>
+                                        {transportationMethod.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="title mt-15">
+                                <div className="mr-30">
+                                    <span className='w80'><span className='c-red'>*</span> 结算方式：</span>
+                                    <Select style={{ width: 300 }} onChange={this.changSettlement} value={showData.settlement_id} >
+                                        {settlementMethod.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
+                                    </Select>
+                                </div>
+                                <div className="mr-30">
+                                    <span className='w80'><span className='c-red'>*</span> 交付期限：</span>
+                                    <DatePicker onChange={this.onChangeTime} value={showData.delivery_at == null ? showData.delivery_at : moment(showData.delivery_at, dateFormat)}
+                                        format={dateFormat} style={{ width: "300px" }} placeholder="请选择日期" />
+                                </div>
+                            </div>
+                            <div className="title mt-15">
+                                <div className="mr-30">
+                                    <span className='w80'>交付地址：</span>
+                                    <Cascader
+                                        fieldNames={{ label: 'name', value: 'name', children: 'child' }}
+                                        options={adressData}
+                                        style={{ width: "300px" }}
+                                        placeholder="请选择"
+                                        onChange={this.onChangeAds}
+                                        value={showData.delivery_address == null ? [] : [showData.delivery_address.province, showData.delivery_address.city, showData.delivery_address.district]}
+                                    />
+                                    <Input style={{ width: "385px", marginLeft: '15px' }}
+                                        value={showData.delivery_address == null ? '' : showData.delivery_address.detail} onChange={this.changeDetail} placeholder="请输去详细地址" />
+                                </div>
+                            </div>
+                            <div className="mt-15 title">
+                                <div>
+                                    <span className='w80' style={{ lineHeight: '32px' }}>结算说明：</span>
+                                </div>
+                                <div>
+                                    <TextArea
+                                        style={{ width: "800px" }}
+                                        placeholder="请输入结算说明"
+                                        autoSize={{ minRows: 3, maxRows: 5 }}
+                                        onChange={this.onChangeInstr}
+                                        value={showData.settlement_instr}
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+                            <div className="mt-15 title">
+                                <div>
+                                    <span className='w80' style={{ lineHeight: '32px' }}>询价备注：</span>
+                                </div>
+                                <div>
+                                    <TextArea
+                                        style={{ width: "800px" }}
+                                        placeholder="请输入备注说明"
+                                        autoSize={{ minRows: 3, maxRows: 5 }}
+                                        onChange={this.onChangeRemark}
+                                        value={showData.remark}
+                                    />
+                                </div>
+                            </div>
                         </div>
+                        {showData.status == 1 &&
+                            <div className="title min-block mt-100 footer-button">
+                                <div>
+                                    <Button type="primary" size='large' onClick={this.PageCancel}>取消</Button>
+                                    <Button style={{ margin: '0 100px 0 100px' }} size='large' type="primary" onClick={() => this.typeSave(1)}>保存</Button>
+                                    <Button type="primary" size='large' onClick={() => this.typeSave(2)}>提交</Button>
+                                </div>
+                            </div>
+                        }
                     </div>
 
-                    <div className="title mt-15">
-                        <div className="mr-30">
-                            <span>结算方式：</span>
-                            <Select style={{ width: 300 }} onChange={this.changSettlement} value={showData.settlement_id} >
-                                {settlementMethod.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
-                            </Select>
-                        </div>
-                        <div className="mr-30">
-                            <span>交付期限：</span>
-                            <DatePicker onChange={this.onChangeTime} value={showData.delivery_at == null ? showData.delivery_at : moment(showData.delivery_at, dateFormat)}
-                                format={dateFormat} style={{ width: "300px" }} placeholder="请选择日期" />
-                        </div>
-                    </div>
-                    <div className="title mt-15">
-                        <div className="mr-30">
-                            <span>交付地址：</span>
-                            <Cascader
-                                fieldNames={{ label: 'name', value: 'name', children: 'child' }}
-                                options={adressData}
-                                style={{ width: "300px" }}
-                                placeholder="请选择"
-                                onChange={this.onChangeAds}
-                                value={showData.delivery_address == null ? '' : [showData.delivery_address.province, showData.delivery_address.city, showData.delivery_address.district]}
-                            />
-                            <Input style={{ width: "385px", marginLeft: '15px' }}
-                                value={showData.delivery_address == null ? '' : showData.delivery_address.detail} onChange={this.changeDetail} placeholder="请输去详细地址" />
-                        </div>
-                    </div>
-                    <div className="mt-15 title">
-                        <div>
-                            <span style={{ lineHeight: '32px' }}>结算说明：</span>
-                        </div>
-                        <div>
-                            <TextArea
-                                style={{ width: "800px" }}
-                                placeholder="请输入结算说明"
-                                autoSize={{ minRows: 3, maxRows: 5 }}
-                                onChange={this.onChangeInstr}
-                                value={showData.settlement_instr}
-                                disabled
-                            />
-                        </div>
-                    </div>
-                    <div className="mt-15 title">
-                        <div>
-                            <span style={{ lineHeight: '32px' }}>询价备注：</span>
-                        </div>
-                        <div>
-                            <TextArea
-                                style={{ width: "800px" }}
-                                placeholder="请输入备注说明"
-                                autoSize={{ minRows: 3, maxRows: 5 }}
-                                onChange={this.onChangeRemark}
-                                value={showData.remark}
-                            />
-                        </div>
-
-                    </div>
-                </div>
-
-                {showData.status == 1 &&
-                    <div className="title min-block mt-100 footer-button">
-                        <div>
-                            <Button type="primary" size='large' onClick={this.PageCancel}>取消</Button>
-                            <Button style={{ margin: '0 100px 0 100px' }} size='large' type="primary" onClick={() => this.typeSave(1)}>保存</Button>
-                            <Button type="primary" size='large' onClick={() => this.typeSave(2)}>提交</Button>
-                        </div>
-                    </div>
                 }
 
             </div >

@@ -73,6 +73,12 @@
     margin-top: 50px;
 }
 
+.but-class-center {
+    margin-top: 100px;
+    display: flex;
+    justify-content: center;
+}
+
 .fw {
     font-weight: bold;
 }
@@ -91,7 +97,7 @@
 }
 
 .down-w {
-    margin-top: 5px;
+    margin-bottom: 5px;
     display: block;
 }
 

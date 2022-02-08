@@ -16,10 +16,46 @@ export default class index extends Component {
                 title: '产品名称',
                 dataIndex: 'name',
             },
-            // {
-            //     title: '产品说明',
-            //     dataIndex: 'address',
-            // },
+            {
+                title: '产品说明',
+                width: 400,
+                render: (text, record) => {
+                    let resultMap = {};
+                    record.options.forEach(option => {
+                        if (typeof resultMap[option.param.id] === 'undefined') {
+                            resultMap[option.param.id] = {
+                                name: option.param.name,
+                                remark: option.pivot.remark,
+                                child: [option.name]
+                            }
+                        } else {
+                            resultMap[option.param.id]['child'].push(option.name)
+                        }
+                    })
+
+                    let resutlList = [];
+                    for (let key in resultMap) {
+                        resutlList.push(resultMap[key]);
+                    }
+                    record.show = resutlList
+                    return (
+                        <div>
+                            {record.show.map((e, index) => (
+                                <div key={index}>
+                                    {e.name}
+                                    {e.remark != '' &&
+                                        <>
+                                            （{e.remark}）
+                                        </>
+
+                                    }：（{e.child.join('，')}）
+                                </div>
+                            ))}
+                        </div>
+                    )
+                }
+            },
+
             {
                 title: '产品规格',
                 dataIndex: 'specification',
@@ -116,10 +152,10 @@ export default class index extends Component {
         isModalVisible: false,
         productShow: {
             options: [],
-            pack_units: []
+            pack_units: [],
+            show: [],
+            quantity: []
         },
-        setOption: [],
-
         assign: [
             {
                 id: 1,
@@ -127,7 +163,7 @@ export default class index extends Component {
             },
             {
                 id: 2,
-                name: '自制&外购'
+                name: '自制&外购（该选项在询价阶段将当做【外购】）'
             },
             {
                 id: 3,
@@ -151,13 +187,24 @@ export default class index extends Component {
         }).then(res => {
             if (res.code == 1) {
                 let data = res.data
-                let list = data.single_products
+                this.getCheckOrderProduct(data.id)
+
                 this.setState(
                     {
                         showData: data,
-                        list,
                     }
                 )
+            } else {
+                message.warning(res.message);
+            }
+        })
+    }
+
+    getCheckOrderProduct(id) {
+        http.get('/inquiry/order/get/' + id + '/product/list').then(res => {
+            if (res.code == 1) {
+                let data = res.data.items
+                this.setState({ list: data })
             } else {
                 message.warning(res.message);
             }
@@ -172,39 +219,40 @@ export default class index extends Component {
         }).then(res => {
             if (res.code == 1) {
                 let data = res.data
-                let option = []
-                let setArr = []
-                data.options.forEach(e => {
-                    option.push(
-                        {
-                            id: e.inquiry_param_id,
-                            name: e.param.name,
-                            source_attribute: '',
-                            params: [
-                                {
-                                    name: e.name
-                                }
-                            ]
+                let resultMap = {};
+                console.log('data: ', data);
+
+                data.options.forEach(option => {
+                    if (typeof resultMap[option.param.id] === 'undefined') {
+                        resultMap[option.param.id] = {
+                            name: option.param.name,
+                            remark: option.pivot.remark,
+                            child: [option.name]
                         }
-                    )
+                    } else {
+                        resultMap[option.param.id]['child'].push(option.name)
+                    }
                 })
-                option.forEach(i => {
-                    i.params.forEach(j => {
-                        if (setArr[i.id]) {
-                            setArr[i.id].params.push({
-                                name: j.name
-                            })
-                        } else {
-                            setArr[i.id] = i
-                        }
-                    })
+
+                let resutlList = [];
+                for (let key in resultMap) {
+                    resutlList.push(resultMap[key]);
+                }
+                data.show = resutlList
+
+                let quantityList = []
+                data.quantities.forEach(q => {
+                    q.unitQuantity = q.quantity + q.unit
+                    quantityList.push(q.unitQuantity)
+
                 })
+                data.quantity = quantityList
+                console.log('data: ', data);
+
                 this.setState({
                     isModalVisible: true,
                     productShow: data,
-                    setOption: setArr
                 })
-                console.log(data.pack_units);
             } else {
                 message.warning(res.message);
             }
@@ -248,7 +296,7 @@ export default class index extends Component {
     saveIt = () => {
         const { confirm } = Modal;
         const { pageId } = this.state
-        let that = this
+        let history = this.props.history
         confirm({
             title: '您确定要提交当前询价单么？提交之后将不可再次分配当前询价单。',
             okText: '确定',
@@ -259,12 +307,10 @@ export default class index extends Component {
                         id: pageId
                     }
                 }).then(res => {
-                    console.log(res);
                     if (res.code == 1) {
                         message.success('提交成功')
-                        let history = this.props.history
                         setTimeout(function () {
-                            path.pathData.getPathData(
+                            common.pathData.getPathData(
                                 {
                                     path: '/productPrice',
                                     data: {
@@ -273,7 +319,7 @@ export default class index extends Component {
                                     history: history
                                 }
                             )
-                        }, 1000)
+                        }, 500)
                     } else {
                         message.warning(res.message);
                     }
@@ -287,59 +333,68 @@ export default class index extends Component {
     }
 
     render() {
-        const { columns, list, showData, isModalVisible, productShow, setOption, assign } = this.state
+        const { columns, list, showData, isModalVisible, productShow, assign } = this.state
         const { Option } = Select;
         return (
             <div className="page">
                 <div>
-                    <div className="title-text">
-                        <span>询价单号：{showData.number}</span>
-                        <span>客户名称：{showData.customer_name}</span>
-                        <span>联系电话：{showData.telephone}</span>
+                    <div className='mb-15 fs'>
+                        <span>
+                            客户名称： {showData.customer_name}
+                        </span>
                     </div>
-                    <div className="title-text mt-15">
-                        <span>询价类型：{showData.type_desc}</span>
-                        <span>销售人员：{showData.salesperson_name}</span>
-                        <span>询价状态：{showData.status_desc}</span>
+                    <div className='mb-15 fs'>
+                        <span className="title-block w300">
+                            询价单号：{showData.number}
+                        </span>
+                        <span className="title-block w300">
+                            询价类型：{showData.type_desc}
+                        </span>
+                        <span className="title-block w300">
+                            销售人员：{showData.salesperson_name}
+                        </span>
                     </div>
+                    <div className='mb-15'>
+                        <span className="title-block w300">
+                            询价人员：{showData.customer_representative_name}
+                        </span>
+                        <span className="title-block w300">
+                            联系电话：{showData.customer_representative_contact}
+                        </span>
+                        <span className="title-block w300">
+                            邮箱地址：{showData.customer_representative_email}
+                        </span>
+                    </div>
+
                     <div className="mt-15">
                         <Table rowKey={record => record.id} columns={columns} dataSource={list} pagination={false} />
                     </div>
-                    <div className="mt-15">
+                    <div>
                         <div className="mt-15">
-                            <span className="mr-100">交付方式：{showData.delivery_mode_desc}</span>
-                            <span className="mr-100">运输方式：{showData.transport_mode_desc}</span>
-                        </div>
-                        <div className="mt-15">
-                            <span className="mr-100">结算方式：{showData.settlement_mode_desc}</span>
-                            <span className="mr-100">交付期限：{showData.delivery_at}</span>
-                        </div>
-                        <div className="mt-15">
-                            <span className="mr-100">交付地址：
-                                {showData.delivery_address != null &&
-                                    <>
-                                        {showData.delivery_address.country}
-                                        {showData.delivery_address.province}
-                                        {showData.delivery_address.city}
-                                        {showData.delivery_address.district}
-                                        {showData.delivery_address.detail}
-                                    </>
-                                }
-
-                            </span>
-                        </div>
-                        <div className="mt-15">
-                            <span className="mr-100">结算说明：{showData.settlement_instr}</span>
-                        </div>
-                        <div className="mt-15">
-                            <span className="mr-100">询价备注：{showData.remark}</span>
+                            <div className="mt-15 fs">
+                                <span className="db w300">交付方式：{showData.delivery_mode_desc}</span>
+                                <span className="db w300">运输方式：{showData.transport_mode_desc}</span>
+                            </div>
+                            <div className="mt-15 fs">
+                                <span className="db w300">结算方式：{showData.settlement_mode_desc}</span>
+                                <span className="db w300">交付期限：{showData.delivery_at}</span>
+                            </div>
+                            <div className="mt-15">
+                                <span className="">交付地址：{showData.address}</span>
+                            </div>
+                            <div className="mt-15">
+                                <span className="mr-100">结算说明：{showData.settlement_instr}</span>
+                            </div>
+                            <div className="mt-15">
+                                <span className="mr-100">询价备注：{showData.remark}</span>
+                            </div>
                         </div>
                     </div>
                     <div className="footer-flex">
                         <Button type="primary" onClick={this.saveIt}>提交</Button>
                     </div>
                     <div>
-                        <Modal title="设置" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel} cancelText="取消" okText="确定" width='800px'>
+                        <Modal title="设置" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel} cancelText="取消" okText="确定" width='800px' maskClosable={false}>
                             <div>
                                 <div className="model-title">
                                     <span>产品名称：{productShow.name}</span>
@@ -351,43 +406,57 @@ export default class index extends Component {
                                     <span>产品单位：{productShow.unit}</span>
                                     <span>样品编号：{productShow.sample_number}</span>
                                 </div>
+                                <div className=" mt-15">
+                                    <span>询价数量：{productShow.quantity.join('，')}</span>
+                                </div>
                                 <div className="mt-15" style={{ display: 'flex' }}>
                                     <div>询价选项：</div>
-                                    <div className="option-name">
-                                        {setOption.map(e => (
-                                            <div key={e.id}>
-                                                <span style={{ display: 'inline-block', textAlign: 'end', width: '100px', marginBottom: '8px' }}>
-                                                    {e.name} ：
-                                                </span>
-                                                {e.params.map((i, index) => (
-                                                    <span style={{ display: 'inline-block', marginRight: '15px' }} key={index}>{i.name}</span>
-                                                ))
-                                                }
-                                            </div>
-                                        ))}
-                                    </div>
 
+                                    <div>
+                                        {productShow.show.length != 0 &&
+                                            productShow.show.map((e, index) => (
+                                                <div key={index} className='mb-15'>
+                                                    {e.name}
+                                                    {
+                                                        e.remark != '' &&
+
+                                                        <>
+                                                            （{e.remark}）
+                                                        </>
+
+                                                    }
+                                                    ：（{e.child.join('，')}）
+                                                </div>
+                                            ))
+
+                                        }
+                                    </div>
                                 </div>
-                                <div className="mt-15">
+                                <div>
+                                </div>
+                                <div style={{ display: 'flex', marginBottom: 15 }}>
+                                    <div>包装单位：</div>
                                     {productShow.pack_units.map((k, index) => (
                                         <div key={index} style={{ marginBottom: '15px', display: 'flex' }}>
-                                            <div>{index + 1}级包装单位：{k.name}</div>
-                                            <div style={{ marginLeft: '30px' }}>
+                                            <span>{index + 1}级包装单位：{k.name}</span>，
+                                            <span>
                                                 {k.pack_material != null &&
-                                                    <span>包装材质：{k.pack_material.name}</span>
+                                                    <span>包装材质：{k.pack_material.name}，</span>
                                                 }
-                                                <span style={{ marginLeft: '30px', display: 'inline-block' }}>包装要求：{k.capacity_type_desc}</span>
-                                                <span style={{ marginLeft: '30px' }}>包装容量：{k.capacity_value}</span>
-                                            </div>
+                                                <span>包装要求：{k.capacity_type_desc}</span>，
+                                                <span >包装容量：{k.capacity_value}</span>
+                                            </span>
                                         </div>
                                     ))
                                     }
                                 </div>
                                 <div>
                                     <span>来源属性：</span>
-                                    <Select style={{ width: 200 }} onChange={this.handleChangeAssign} value={productShow.source_attribute}>
+                                    <Select style={{ width: 400 }} onChange={this.handleChangeAssign} value={productShow.source_attribute}>
                                         {assign.map(e => (
-                                            <Option key={e.id} value={e.id}>{e.name}</Option>
+                                            <Option key={e.id} value={e.id}>
+                                                {e.name}
+                                            </Option>
                                         ))
                                         }
                                     </Select>

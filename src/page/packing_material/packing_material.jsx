@@ -68,7 +68,7 @@ class index extends Component {
                 ),
             },
             {
-                title: '单位',
+                title: '计数单位',
                 render: (text, record) => (
                     <div>
                         {record.bind_material != null &&

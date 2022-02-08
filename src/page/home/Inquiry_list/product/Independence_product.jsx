@@ -5,7 +5,6 @@ import http from '../../../../http/index'
 import api from '../../../../http/httpApiName'
 import common from '../../../../../public/common';
 import '../../index.css'
-import { data } from 'jquery';
 
 class Independence_product extends Component {
     state = {
@@ -60,7 +59,6 @@ class Independence_product extends Component {
             this.setState({ pageId: aData })
             this.getInquiryList()
             let company_id = common.common.getQueryVariable('company_id')
-            console.log('company_id:=== ', company_id);
             this.setState({ company_id })
         }
         if (eData) {
@@ -80,7 +78,7 @@ class Independence_product extends Component {
             if (res.code == 1) {
                 let data = res.data
                 let company_id = res.data.company_id
-                console.log('company_id: ', company_id);
+
                 if (data.pack_units.length == 0) {
                     data.pack_units.push(
                         {
@@ -98,7 +96,6 @@ class Independence_product extends Component {
                         j.unit_name = data.pack_units[index - 1].name + '/' + j.name
                     }
                 })
-                this.getInquiryList()
                 this.setState(
                     {
                         inputData: data,
@@ -118,7 +115,7 @@ class Independence_product extends Component {
     }
     // 获取询价选项设置
     getInquiryList() {
-        http.get(api.inquiryOptionsList).then(res => {
+        http.get('inquiry/param/list?is_usage=1').then(res => {
             if (res.code == 1) {
                 let { inputData } = this.state
                 let data = res.data.items
@@ -133,6 +130,7 @@ class Independence_product extends Component {
                                     if (e.is_usage) {
                                         if (i.id == j.id) {
                                             j.checked = true
+                                            j.changeRemark = i.pivot.remark
                                         }
                                     } else {
                                         j.checked = false
@@ -305,7 +303,6 @@ class Independence_product extends Component {
     // 上传
     onChangeUpload = (info) => {
         const { company_id, fList, editId } = this.state
-        console.log('company_id: ', company_id);
         const formData = new FormData();
         formData.append('file', info.file);
         formData.append('company_id', company_id);
@@ -326,7 +323,6 @@ class Independence_product extends Component {
                 this.setState({
                     fList
                 });
-                console.log('editId: ', editId);
                 if (editId != '') {
                     this.editUpload(editUplaodData, info.file)
                 }
@@ -337,17 +333,15 @@ class Independence_product extends Component {
     }
     // 编辑上传
     editUpload = (data, file) => {
-        console.log('file: ', file);
         const { editId, orderProId } = this.state
         let params = {
             file_id: data.file_id,
-            storage_location: data.file_path,
+            storage_location: data.location,
             filename: file.name,
             inquiry_order_product_id: orderProId,
             quotation_order_id: 0,
         }
         http.post(api.attachUpload, params).then(res => {
-            console.log('res.code: ', res.code);
             if (res.code == 1) {
                 message.success('上传成功')
                 this.getshowData(editId)
@@ -366,12 +360,22 @@ class Independence_product extends Component {
             if (e.checked) {
                 e.options.forEach(i => {
                     if (i.checked) {
-                        e.data.push(
-                            {
-                                id: i.id,
-                                name: i.name
-                            }
-                        )
+                        if (i.has_remark) {
+                            e.data.push(
+                                {
+                                    id: i.id,
+                                    name: i.name,
+                                    remark: i.remark
+                                }
+                            )
+                        } else {
+                            e.data.push(
+                                {
+                                    id: i.id,
+                                    name: i.name,
+                                }
+                            )
+                        }
                     }
                 })
                 sing.push(
@@ -414,8 +418,9 @@ class Independence_product extends Component {
             }
 
         })
+
+
         let params = {
-            inquiry_order_id: pageId,
             name: inputData.name,
             unit: inputData.unit,
             specification: inputData.specification,
@@ -427,17 +432,37 @@ class Independence_product extends Component {
             pack_units: unitList,
 
         }
+        if (params.name == '') {
+            message.warning('请输入产品名称')
+            return
+        } else if (params.specification == '') {
+            message.warning('请输入产品规格')
+            return
+        } else if (params.unit == '') {
+            message.warning('请输入产品单位')
+            return
+        } else if (params.quantities.length == 0) {
+            message.warning('请输入询价数量')
+            return
+        } else if (params.params.length == 0) {
+            message.warning('请选择询价选项')
+            return
+        }
+
+
         let history = this.props.history
         let _id
         let url
         if (typeof id === 'undefined') {
-            _id = pageId
+            params.inquiry_order_id = Number(pageId),
+                _id = pageId
             url = api.productCreate
             params.attaches = fList
         } else {
-            _id = toEdit
+            params.inquiry_order_id = Number(toEdit),
+                _id = toEdit
             url = api.productUpdate
-            params.id = id
+            params.id = Number(id)
         }
 
         http.post(url, params).then(res => {
@@ -452,16 +477,17 @@ class Independence_product extends Component {
                         {
                             path: '/addList?id=' + _id,
                             data: {
-                                id: _id
+                                id: _id,
+                                type: 1,
                             },
                             history: history
                         }
                     )
-                }, 1000);
+                }, 500);
 
 
             } else {
-                message.warning(res.message);
+                message.warning(res.data.message);
             }
         })
 
@@ -478,7 +504,7 @@ class Independence_product extends Component {
                 message.success('删除成功')
                 this.getshowData(editId)
             } else {
-                message.warning(res.message)
+                message.warning(res.datamessage)
             }
         })
     }
@@ -486,6 +512,37 @@ class Independence_product extends Component {
     getDownloadUrl = (id, storage_location) => {
         common.downFile.down(id, storage_location)
     }
+    onchangeRemarkInput = (e, index, index1) => {
+        const { inquiryList } = this.state
+        console.log('inquiryList: ', inquiryList);
+        inquiryList[index].options[index1].remark = e.target.value
+        inquiryList[index].options[index1].changeRemark = e.target.value
+        this.setState({ inquiryList })
+
+    }
+
+    // 返回页面
+    backPage = (id) => {
+        const { pageId, toEdit } = this.state
+        if (typeof id === 'undefined') {
+            id = Number(pageId)
+        } else {
+            id = toEdit
+        }
+        let history = this.props.history
+        common.pathData.getPathData(
+            {
+                path: '/addList?id=' + id,
+                data: {
+                    id: id,
+                    type: 2,
+
+                },
+                history: history
+            }
+        )
+    }
+
 
     render() {
         const { numArr, inquiryList, packList, material, inputData, pageId, editId, company_id, isShowUploadList } = this.state
@@ -549,23 +606,23 @@ class Independence_product extends Component {
                 <div className="min-block">
                     <div className="flxe-i">
                         <div className="mr-30">
-                            <span>产品名称：</span>
+                            <span className='w80'><span className='c-red'>*</span> 产品名称：</span>
                             <Input onChange={this.chengInput} name="name" value={inputData.name} style={{ width: 200 }} placeholder="请输入产品名称" />
                         </div>
                         <div className="mr-30">
-                            <span>产品规格：</span>
+                            <span className='w80'><span className='c-red'>*</span> 产品规格：</span>
 
                             <Input style={{ width: 200 }} onChange={this.chengInput} name="specification" value={inputData.specification} placeholder="请输入产品规格" />
                         </div>
                         <div className="mr-30">
-                            <span>产品单位：</span>
+                            <span className='w80'><span className='c-red'>*</span> 产品单位：</span>
                             <Input style={{ width: 200 }} onChange={this.chengInput} name="unit" value={inputData.unit} placeholder="请输入产品单位" />
                         </div>
 
                     </div>
                     <div className="flxe-i mt-15">
                         <div className="mr-30">
-                            <span>定制属性：</span>
+                            <span className='w80'>定制属性：</span>
                             <Select style={{ width: 200 }} placeholder="请选择" onChange={this.handleChangeCustom} value={inputData.custom_attribute}>
                                 {inputData.custom_attribute}
                                 {
@@ -576,11 +633,11 @@ class Independence_product extends Component {
                             </Select>
                         </div>
                         <div className="mr-30">
-                            <span>样品编号：</span>
+                            <span className='w80'>样品编号：</span>
                             <Input style={{ width: 200 }} onChange={this.chengInput} name="sample_number" value={inputData.sample_number} defaultValue={inputData.sample_number} placeholder="请输入样品编号" />
                         </div>
                         <div className="mr-30">
-                            <span>客户产品编号：</span>
+                            <span className='w80'>客户料号：</span>
                             <Input style={{ width: 200 }} onChange={this.chengInput} name="customer_number" value={inputData.customer_number} placeholder="请输入客户产品编号" />
                         </div>
                     </div>
@@ -588,7 +645,7 @@ class Independence_product extends Component {
                         <div className="flxe-i">
                             <div className="flxe-i" style={{ marginRight: 44 }}>
                                 <div>
-                                    <span style={{ lineHeight: '32px' }}>询价数量：</span>
+                                    <span className='w80' style={{ lineHeight: '32px' }}><span className='c-red'>*</span> 询价数量：</span>
                                 </div>
                                 <div>
                                     {numArr.map((e, index) => (
@@ -610,7 +667,7 @@ class Independence_product extends Component {
                                     <div className='fs'>
                                         <div className='lh-32'>产品附件：</div>
                                         <div className='fs'>
-                                            <Upload {...props} showUploadList={isShowUploadList}>
+                                            <Upload multiple={true} {...props} showUploadList={isShowUploadList}>
                                                 <Button icon={<UploadOutlined />}>上传文件</Button>
                                             </Upload>
                                         </div>
@@ -630,40 +687,52 @@ class Independence_product extends Component {
                             </div>
                         </div>
 
-                        <div className="mr-30 flxe-i">
-                            <span>
-                                询价选项：
-                            </span>
-                            <div>
+                        <div className="mr-30">
+                            <div className='lh-32' style={{ width: '100px' }}>
+                                <span className='c-red'>*</span> 询价选项：
+                            </div>
+                            <div style={{ marginLeft: '30px' }}>
                                 {
                                     inquiryList.map((e, index) => {
                                         if (e.is_single_choice) {
                                             return (
-                                                <div className="inquiry-block" key={index}>
-                                                    <span className="inquiry">  {e.name} ：</span>
-                                                    <Radio.Group onChange={(e) => this.onChangeSing(e, index)} value={e.valueData}>
-                                                        {
-                                                            e.options.map((i, index1) => (
-                                                                <Radio key={index1} value={i.id}>
-                                                                    <div style={{ marginRight: '30px' }}>
-                                                                        {i.name}
-                                                                    </div>
-                                                                </Radio>
-                                                            ))
-                                                        }
-                                                    </Radio.Group>
+                                                <div style={{ display: 'flex', marginBottom: '15px', flexWrap: 'wrap' }} key={index}>
+                                                    <div className="inquiry  lh-32">  {e.name} ：</div>
+                                                    <div className='flxe-i'>
+                                                        <Radio.Group onChange={(e) => this.onChangeSing(e, index)} value={e.valueData}>
+                                                            {
+                                                                e.options.map((i, index1) => (
+                                                                    <Radio key={index1} value={i.id}>
+                                                                        <div style={{ marginRight: '30px' }}>
+                                                                            <span className='lh-32'>{i.name}</span>
+                                                                            {i.has_remark &&
+                                                                                <>
+                                                                                    <Input value={i.changeRemark} placeholder={'请输入' + i.remark} className='w300 ml-5' onChange={(e) => this.onchangeRemarkInput(e, index, index1)} />
+                                                                                </>
+                                                                            }
+                                                                        </div>
+                                                                    </Radio>
+                                                                ))
+                                                            }
+                                                        </Radio.Group>
+                                                    </div>
                                                 </div>
                                             )
 
                                         } else {
                                             return (
                                                 <div className="inquiry-block" key={index}>
-                                                    <span className="inquiry">  {e.name} ：</span>
+                                                    <span className="inquiry lh-32">  {e.name} ：</span>
                                                     {
                                                         e.options.map((i, index1) => (
-                                                            <Checkbox key={index1} onChange={(event) => this.onChangeMultiple(event, index, index1)} checked={i.checked}>
+                                                            <Checkbox key={index1} onChange={(event) => this.onChangeMultiple(event, index, index1)} checked={i.checked} className='mb-15'>
                                                                 <div style={{ marginRight: '30px' }} >
-                                                                    {i.name}
+                                                                    <span className='lh-32'>{i.name}</span>
+                                                                    {i.has_remark &&
+                                                                        <>
+                                                                            <Input value={i.changeRemark} placeholder={'请输入' + i.remark} className='w300 ml-5' onChange={(e) => this.onchangeRemarkInput(e, index, index1)} />
+                                                                        </>
+                                                                    }
                                                                 </div>
                                                             </Checkbox>
                                                         ))
@@ -680,7 +749,7 @@ class Independence_product extends Component {
                 </div>
                 <div className="min-block mt-15">
                     <div>
-                        <span>产品包装：</span>
+                        <span className='w80'>产品包装：</span>
                         <Button onClick={() => this.addProduct(packList.length)} type="primary">添加</Button>
                     </div>
                     {packList.map((e, index) => (
@@ -726,10 +795,17 @@ class Independence_product extends Component {
                 <div className="min-block">
                     <div className="footer-flex">
                         {pageId != '' &&
-                            <Button type="primary" size='large' onClick={() => this.saveAddProduct()}>添加</Button>
+                            <div className='foot-fs'>
+                                <Button type="primary" size='large' onClick={() => this.saveAddProduct()}>保存</Button>
+                                <Button type="primary" size='large' onClick={() => this.backPage()}>返回</Button>
+                            </div>
                         }
                         {editId != '' &&
-                            <Button type="primary" size='large' onClick={() => this.saveAddProduct(editId)}>保存</Button>
+                            <div className='foot-fs'>
+                                <Button type="primary" size='large' onClick={() => this.saveAddProduct(editId)}>保存</Button>
+                                <Button type="primary" size='large' onClick={() => this.backPage(editId)}>返回</Button>
+                            </div>
+
                         }
                     </div>
                 </div>

@@ -49,6 +49,63 @@ class index extends Component {
                 width: 200
             },
             {
+                title: '产品说明',
+                render: (text, record) => {
+                    let show = []
+
+                    record.product.options.forEach(e => {
+                        let remark = ''
+                        if (e.pivot.remark != '') {
+                            remark = '(' + e.pivot.remark + ')'
+                        }
+                        show.push(
+                            {
+                                name: e.param.name,
+                                pid: e.param.id,
+                                remark: e.remark,
+                                child: [
+                                    {
+                                        name: e.name + remark
+                                    }
+                                ]
+                            }
+                        )
+                    })
+                    let list = {}
+                    show.forEach(i => {
+                        if (list[i.pid]) {
+                            list[i.pid].child.push(...i.child)
+                        } else {
+                            list[i.pid] = i
+                        }
+
+                    })
+
+                    let data = []
+                    for (let key in list) {
+                        let name = []
+                        for (let keyChild in list[key].child) {
+                            name.push(list[key].child[keyChild].name)
+                        }
+                        list[key].child = name.join('，')
+                        data.push(list[key])
+                    }
+
+                    return (
+                        <div>
+                            {
+                                data.map((e, index) => (
+                                    <div key={index}>
+                                        {e.name}（{e.child}）
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    )
+                },
+                width: 400
+            },
+            {
                 title: '产品规格',
                 render: (text, record) => (
                     <>
@@ -79,7 +136,7 @@ class index extends Component {
             },
             {
                 title: '包装要求',
-                width: 600,
+                width: 400,
                 render: (text, record) => (
                     <>
                         {record.product != null &&
@@ -91,7 +148,7 @@ class index extends Component {
                                             <span style={{ display: 'inline-block', marginRight: '10px' }}>
                                                 包装材质：{e.pack_material.name}，
                                             </span>
-                                        },
+                                        }
                                         <span style={{ display: 'inline-block', marginRight: '10px' }}> 包装容量：{e.capacity_type_desc}</span>，
 
                                         {e.capacity_type == 1 &&
@@ -145,13 +202,19 @@ class index extends Component {
             },
             {
                 title: '匹配物料编号',
-                dataIndex: 'age',
-                width: 150,
+                render: (text, record) => (
+                    <>
+                        <span>{record.product.show_material_sku_number}</span>
+                    </>
+                ),
             },
             {
                 title: '匹配UOM编号',
-                dataIndex: 'address',
-                width: 150,
+                render: (text, record) => (
+                    <>
+                        <a style={{ color: 'red' }}>后端，暂无字段</a>
+                    </>
+                ),
             },
             {
                 title: '来源属性',
@@ -186,53 +249,43 @@ class index extends Component {
                     let look
                     let config
                     let check
-                    if (record.status) {
-                        look = <a onClick={() => this.goPriceList(record.id)}>查看</a>
-                    }
+                    let analyze
+                    look = <a onClick={() => this.goPriceList(record.id)}>查看</a>
+                    analyze = <a onClick={() => this.goAnalyze(record.id)}>成本分析</a>
 
                     if (record.status == 3 || record.status == 4) {
-                        config = <>
-                            <a onClick={() => this.goBomPage()}>配置BOM</a>
-                            < Divider type="vertical" />
-                            <a style={{ color: '#ccc' }}>核价</a>
-                        </>
-                    } else if (record.status == 5 || record.status == 6) {
-                        check = <>
-                            <a style={{ color: '#ccc' }}>配置BOM</a>
-                            < Divider type="vertical" />
-                            <a onClick={() => this.goPriceList(record.id)}>核价</a>
-                        </>
+                        config = <a onClick={() => this.goBomPage()}>配置BOM</a>
                     } else {
-                        check = <>
-                            <a style={{ color: '#ccc' }}>配置BOM</a>
-                            < Divider type="vertical" />
-                            <a style={{ color: '#ccc' }}>核价</a>
-                        </>
+                        config = <a style={{ color: '#ccc' }}>配置BOM</a>
+                    }
+
+                    if (record.status == 5 || record.status == 6) {
+                        check = <a onClick={() => this.goPriceList(record.id)}>核价</a>
+                    } else {
+                        check = <a style={{ color: '#ccc' }}>核价</a>
                     }
 
                     return (
                         <div>
-                            {look}
-                            < Divider type="vertical" />
-                            {config}
-                            {check}
+                            <div className='mb-5'>
+                                {look}
+                                < Divider type="vertical" />
+                                {config}
+                            </div>
+                            <div>
+                                {check}
+                                < Divider type="vertical" />
+                                {analyze}
+                            </div>
+
                         </div >
                     )
-
-
 
                 }
 
             },
         ],
-        listData: [
-            {
-                product: {
-                    quantities: [],
-                    pack_units: []
-                }
-            }
-        ],
+        listData: [],
         pagination: {
             total: 0,
             current: 1,
@@ -244,6 +297,8 @@ class index extends Component {
             related_number: '',
             status: '',
             related_type: '',
+            customer_name: '',
+            product_name: '',
         },
         statuslist: [],
         relatedTypeOption: [
@@ -275,8 +330,9 @@ class index extends Component {
                 number: serach.number,
                 related_number: serach.related_number,
                 status: serach.status,
-                related_type: serach.related_type
-
+                related_type: serach.related_type,
+                product_name: serach.product_name,
+                customer_name: serach.customer_name
             }
         }).then(res => {
             if (res.code == 1) {
@@ -318,6 +374,9 @@ class index extends Component {
         this.setState({ serach })
     }
     serchIt = () => {
+        const { pagination } = this.state
+        pagination.current = 1
+        this.setState({ pagination })
         this.getList()
     }
     // 获取状态
@@ -358,6 +417,21 @@ class index extends Component {
 
     }
 
+    goAnalyze = (id) => {
+        let history = this.props.history
+        common.pathData.getPathData(
+            {
+                path: '/analyze?id=' + id,
+                data: {
+                    id: id,
+                    type: 3,
+                },
+                history: history
+            }
+        )
+
+    }
+
 
 
     render() {
@@ -367,12 +441,16 @@ class index extends Component {
             <div className="page">
                 <div className='mb-15 fs'>
                     <div className='mr-15'>
-                        <span>核价单号：</span>
-                        <Input name='number' onChange={this.changeSerachInput} className="w200" placeholder="请输入核价单号" />
+                        <span>客户名称：</span>
+                        <Input name='customer_name' onChange={this.changeSerachInput} className="w200" placeholder="请输入客户名称" />
                     </div>
                     <div className='mr-15'>
                         <span>询价单号：</span>
                         <Input name='related_number' onChange={this.changeSerachInput} className="w200" placeholder="请输入询价单号" />
+                    </div>
+                    <div className='mr-15'>
+                        <span>核价单号：</span>
+                        <Input name='number' onChange={this.changeSerachInput} className="w200" placeholder="请输入核价单号" />
                     </div>
                     <div className='mr-15'>
                         <span>核价状态：</span>
@@ -383,6 +461,14 @@ class index extends Component {
                             }
                         </Select>
                     </div>
+                </div>
+                <div className='mb-15 fs'>
+                    <div className='mr-15'>
+                        <span>产品名称：</span>
+                        <Input name='product_name' onChange={this.changeSerachInput} className="w200" placeholder="请输入产品名称" />
+                    </div>
+
+
                     <div className='mr-15'>
                         <span>相关类型：</span>
                         <Select style={{ width: 200 }} onChange={this.handleChangeRelatedTypeOption} placeholder="请选择">
