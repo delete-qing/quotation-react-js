@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Table, Modal, Divider, Select, message, Input, Button, Pagination } from 'antd';
-import common from '../../../public/common';
+import common from '../common/common';
 import http from '../../http/index'
 import api from "../../http/httpApiName";
 import './index.css'
@@ -17,20 +17,45 @@ export default class index extends Component {
                 fixed: 'left',
             },
             {
-                title: '状态',
-                dataIndex: 'status_desc',
+                title: '工单状态',
+                render: (text, record) => (
+                    <>
+                        <div>{record.status_desc}（{record.bom_status_desc}）</div>
+                    </>
+
+                ),
                 fixed: 'left',
-                width: 150
+                width: 210
             },
             {
-                title: '相关类型',
-                dataIndex: 'related_type_desc',
-                width: 150
+                title: '工程图纸',
+                render: (text, record) => (
+                    <>
+                        <div>{record.project_file_person_name}</div>
+                        <div>{record.project_commit_at}</div>
+                    </>
+
+                ),
             },
             {
-                title: '相关单号',
-                dataIndex: 'related_number',
-                width: 200,
+                title: 'PE配置',
+                render: (text, record) => (
+                    <>
+                        <div>{record.pe_person_name}</div>
+                        <div>{record.pe_commit_at}</div>
+                    </>
+
+                ),
+            },
+            {
+                title: 'IE规划',
+                render: (text, record) => (
+                    <>
+                        <div>{record.ie_person_name}</div>
+                        <div>{record.ie_commit_at}</div>
+                    </>
+
+                ),
             },
             {
                 title: '产品编号',
@@ -59,18 +84,6 @@ export default class index extends Component {
                         }
                     </>
 
-                ),
-            },
-            {
-                title: '产品规格',
-                render: (text, record) => (
-                    <>
-                        {record.product != null &&
-                            <div>
-                                {record.product.specification}
-                            </div>
-                        }
-                    </>
                 ),
             },
             {
@@ -131,6 +144,8 @@ export default class index extends Component {
 
                 },
             },
+
+
             {
                 title: '来源属性',
                 render: (text, record) => (
@@ -144,6 +159,29 @@ export default class index extends Component {
 
                 ),
             },
+            {
+                title: '相关类型',
+                dataIndex: 'related_type_desc',
+                width: 150
+            },
+            {
+                title: '相关单号',
+                dataIndex: 'related_number',
+                width: 200,
+            },
+            {
+                title: '产品规格',
+                render: (text, record) => (
+                    <>
+                        {record.product != null &&
+                            <div>
+                                {record.product.specification}
+                            </div>
+                        }
+                    </>
+                ),
+            },
+
             {
                 title: '计数单位',
                 render: (text, record) => (
@@ -164,36 +202,6 @@ export default class index extends Component {
             {
                 title: '工单生成时间',
                 dataIndex: 'created_at',
-            },
-            {
-                title: '工单图纸',
-                render: (text, record) => (
-                    <>
-                        <div>{record.project_file_person_name}</div>
-                        <div>{record.project_commit_at}</div>
-                    </>
-
-                ),
-            },
-            {
-                title: 'PE配置',
-                render: (text, record) => (
-                    <>
-                        <div>{record.pe_person_name}</div>
-                        <div>{record.pe_commit_at}</div>
-                    </>
-
-                ),
-            },
-            {
-                title: 'IE规划',
-                render: (text, record) => (
-                    <>
-                        <div>{record.ie_person_name}</div>
-                        <div>{record.ie_commit_at}</div>
-                    </>
-
-                ),
             },
             {
                 title: '操作',
@@ -226,9 +234,9 @@ export default class index extends Component {
                     }
 
                     if (record.status != 1) {
-                        preview = <a onClick={() => this.goPreview(record, 5)}>BOM预览</a>
+                        preview = <a onClick={() => this.goPreview(record, 1)}>BOM查看</a>
                     } else {
-                        preview = <a style={{ color: '#ccc' }}>BOM预览</a>
+                        preview = <a style={{ color: '#ccc' }}>BOM查看</a>
                     }
 
                     if (record.status == 4) {
@@ -253,7 +261,6 @@ export default class index extends Component {
         list: [],
         personnelData: [],
         isModalVisible: false,
-
         listId: '',
         satusData: [],
         searchData: {
@@ -264,6 +271,8 @@ export default class index extends Component {
             ie_person_name: '',
             pe_person_name: '',
             status: '',
+            project_file_person_name: '',
+            bom_status: '',
         },
         pagination: {
             total: 0,
@@ -274,17 +283,20 @@ export default class index extends Component {
         showData: {
             product: {},
         },
-        listProject: []
+        listProject: [],
+        type: 1,
+        BOMSatusData: []
 
     }
     componentDidMount() {
         this.getList()
         this.getPersonnel()
         this.getStatus()
+        this.getBOMStatus()
     }
-    getList() {
+    getList(type = 1) {
         const { pagination, searchData } = this.state
-        http.get(api.bomList, {
+        http.get(api.bomList[type], {
             params: {
                 per_page: pagination.pageSize,
                 page: pagination.current,
@@ -295,6 +307,8 @@ export default class index extends Component {
                 ie_person_name: searchData.ie_person_name,
                 pe_person_name: searchData.pe_person_name,
                 status: searchData.status,
+                project_file_person_name: searchData.project_file_person_name,
+                bom_status: searchData.bom_status
 
             }
         }).then(res => {
@@ -310,19 +324,19 @@ export default class index extends Component {
             }
         })
     }
+
     onChangePage = (page, pageSize) => {
-        const { pagination } = this.state
+        const { pagination, type } = this.state
         pagination.current = page
         pagination.pageSize = pageSize
         this.setState({ pagination })
-        this.getList()
+        this.getList(type)
     }
-
-    searchIt = () => {
+    searchIt = (type) => {
         const { pagination } = this.state
         pagination.current = 1
-        this.setState({ pagination })
-        this.getList()
+        this.setState({ pagination, type })
+        this.getList(type)
     }
     getStatus() {
         http.get(api.bomStatus).then(res => {
@@ -334,11 +348,21 @@ export default class index extends Component {
             }
         })
     }
+
+    getBOMStatus() {
+        http.get('/bom/order/bom/status').then(res => {
+            if (res.code == 1) {
+                let data = res.data
+                this.setState({ BOMSatusData: data })
+            } else {
+                message.warning(res.message)
+            }
+        })
+    }
     getPersonnel() {
         http.get(api.adminList).then(res => {
             if (res.code == 1) {
                 let data = res.data.items
-
                 let listProject = common.clone.deepClone(data)
                 listProject.push(
                     {
@@ -452,23 +476,17 @@ export default class index extends Component {
                 history: history
             }
         )
-
     }
-
-
-
-    handleChangeStatus = (value) => {
+    handleChangeStatus = (value, key) => {
         const { searchData } = this.state
-        searchData.status = value
+        searchData[key] = value
         this.setState({ searchData })
-        this.getList()
     }
     changeInput = (e) => {
         const { searchData } = this.state
         searchData[e.target.name] = e.target.value
         this.setState({ searchData })
     }
-
     // 工程图纸
     goProject(data) {
         let history = this.props.history
@@ -482,11 +500,10 @@ export default class index extends Component {
                 history: history
             }
         )
-
     }
 
     render() {
-        const { columns, list, isModalVisible, personnelData, satusData, pagination, pageSizeOptions, showData, listProject } = this.state
+        const { columns, list, isModalVisible, personnelData, satusData, pagination, pageSizeOptions, showData, listProject, BOMSatusData } = this.state
         const { Option } = Select;
         let isProject = false
         if (!showData.project_commit_at == null) {
@@ -501,8 +518,8 @@ export default class index extends Component {
                             <Input name="number" onChange={this.changeInput} className="w200" placeholder="请输入工单编号" />
                         </div>
                         <div className="mr-20">
-                            <span>相关单号：</span>
-                            <Input name="related_number" onChange={this.changeInput} className="w200" placeholder="请输入相关单号" />
+                            <span>询价单号：</span>
+                            <Input name="related_number" onChange={this.changeInput} className="w200" placeholder="请输入询价单号" />
                         </div>
                         <div className="mr-20">
                             <span>产品名称：</span>
@@ -515,8 +532,8 @@ export default class index extends Component {
                     </div>
                     <div className="fs mb-15">
                         <div className="mr-20">
-                            <span>筛选状态：</span>
-                            <Select style={{ width: 200 }} onChange={this.handleChangeStatus}>
+                            <span>工单状态：</span>
+                            <Select placeholder="请选择" style={{ width: 200 }} onChange={(event) => this.handleChangeStatus(event, 'status')}>
                                 {
                                     satusData.map(e => (
                                         <Option key={e.id} value={e.id}>{e.name}</Option>
@@ -524,16 +541,24 @@ export default class index extends Component {
                                 }
                             </Select>
                         </div>
+
+
                         <div className="mr-20">
-                            <span>PE&nbsp;人&nbsp;&nbsp;员：</span>
+                            <span>工程图纸：</span>
+                            <Input name="project_file_person_name" onChange={this.changeInput} className="w200" placeholder="请输入工程图纸人员" />
+                        </div>
+                        <div className="mr-20">
+                            <span>PE&nbsp;&nbsp;人&nbsp;&nbsp;员：</span>
                             <Input name="pe_person_name" onChange={this.changeInput} className="w200" placeholder="请输入PE人员" />
                         </div>
                         <div className="mr-20">
-                            <span>IE&nbsp;&nbsp;人&nbsp;&nbsp;员：</span>
+                            <span>IE&nbsp;&nbsp;人&nbsp;&nbsp;&nbsp;员：</span>
                             <Input name="ie_person_name" onChange={this.changeInput} className="w200" placeholder="请输入IE人员" />
                         </div>
-                        <Button type="primary" onClick={this.searchIt}>搜索</Button>
-
+                        <div style={{ marginLeft: 13 }}>
+                            <Button type="primary" className="mr-20" onClick={() => this.searchIt(1)}>搜索</Button>
+                            <Button type="primary" onClick={() => this.searchIt(2)}>搜索公司全部相关信息</Button>
+                        </div>
                     </div>
                     <div>
                         <Table rowKey={record => record.id} columns={columns} dataSource={list} pagination={false} scroll={{ x: 3000 }} />
@@ -554,7 +579,6 @@ export default class index extends Component {
                                     </span>
                                     {showData.number}
                                 </div>
-
                                 <div className='mb-15'>
                                     <span style={{ display: 'inline-block', width: '70px', textAlign: 'right' }}>
                                         产品编号：
@@ -562,7 +586,6 @@ export default class index extends Component {
                                     {showData.product.number}
                                 </div>
                             </div>
-
                             <div className='mb-15'>
                                 <span style={{ display: 'inline-block', width: '70px', textAlign: 'right' }}>
                                     产品名称：
@@ -570,53 +593,51 @@ export default class index extends Component {
                                 {showData.product.name}
                             </div>
                         </div>
-
                         <div className="mt-15">
                             <span style={{ display: 'inline-block', width: '70px', textAlign: 'right' }}>
                                 工程图纸：
                             </span>
-                            <Select style={{ width: '260px' }} onChange={this.handleChangeProject} value={showData.project_file_person_id} disabled={isProject}>
+                            <Select
+                                showSearch
+                                style={{ width: '260px' }}
+                                onChange={this.handleChangeProject}
+                                value={showData.project_file_person_id}
+                                disabled={isProject}
+                                optionFilterProp="children">
                                 {
                                     listProject.map(e => (
                                         <Option key={e.id} value={e.id}>{e.name}</Option>
                                     ))
                                 }
-
                             </Select>
                         </div>
-
                         <div className="mt-15">
                             <span style={{ display: 'inline-block', width: '70px', textAlign: 'right' }}>
                                 PE配置：
                             </span>
-                            <Select style={{ width: '260px' }} onChange={this.handleChangePE} value={showData.pe_person_id} disabled={!showData.pe_commit_at == null}>
+                            <Select style={{ width: '260px' }} showSearch optionFilterProp="children" onChange={this.handleChangePE} value={showData.pe_person_id} disabled={!showData.pe_commit_at == null}>
                                 {
                                     personnelData.map(e => (
                                         <Option key={e.id} value={e.id}>{e.name}</Option>
                                     ))
                                 }
-
                             </Select>
                         </div>
-
                         <div className="mt-15">
                             <span style={{ display: 'inline-block', width: '70px', textAlign: 'right' }} >
                                 IE规划：
                             </span>
-                            <Select style={{ width: '260px' }} onChange={this.handleChangeIE} value={showData.ie_person_id} disabled={!showData.ie_commit_at == null}>
+                            <Select style={{ width: '260px' }} showSearch optionFilterProp="children" onChange={this.handleChangeIE} value={showData.ie_person_id} disabled={!showData.ie_commit_at == null}>
                                 {
                                     personnelData.map(e => (
                                         <Option key={e.id} value={e.id}>{e.name}</Option>
                                     ))
                                 }
-
                             </Select>
                         </div>
-
-
                     </Modal>
                 </div>
-            </div>
+            </div >
         )
     }
 }

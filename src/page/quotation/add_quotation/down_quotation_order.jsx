@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Table, Button, Select, message, Input } from 'antd';
 import http from '../../../http/index'
 import api from '../../../http/httpApiName'
-import common from '../../../../public/common';
+import common from '../../common/common';
 
 
 class down_quotation_order extends Component {
@@ -170,7 +170,7 @@ class down_quotation_order extends Component {
                                 单价/RMB <br />
                                 （含税含运价）
                             </td>
-                            <td>    
+                            <td>
                                 报价合计<br />
                                 （含税含运价）
                             </td>
@@ -205,7 +205,7 @@ class down_quotation_order extends Component {
                                     <td>
                                         {e.check_price_order_details.map((i, index1) => (
                                             <div key={index1}>
-                                                {i.quantity}
+                                                {i.quantity}{e.unit}
                                             </div>
                                         ))
 

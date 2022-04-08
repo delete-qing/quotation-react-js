@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { Table, Button, Select, message, Input, Upload } from 'antd';
+import { Table, Button, message, Input, Upload, Modal } from 'antd';
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
-import common from '../../../../public/common'
+import common from '../../common/common'
 import http from '../../../http/index'
 import api from '../../../http/httpApiName'
 
@@ -15,7 +15,321 @@ class look_quotation extends Component {
             attaches: [],
             inquiry_order: {}
         },
-        columnsPro: [
+        proList: [],
+        company_id: '',
+        checkDay: 0,
+        showTitle: {},
+        isModalVisibleBackCheckPrice: false,
+        BackCheckPriceData: {
+            name: '',
+            return_reason: '',
+            product_id: '',
+        },
+        isModalVisibleBackProject: false,
+        BackProjectData: {
+            name: '',
+            return_reason: '',
+            product_id: '',
+        },
+        statusNum: '',
+    }
+
+    componentDidMount() {
+        let id = common.common.getQueryVariable('id')
+        let typeId = common.common.getQueryVariable('type')
+        this.setState({
+            pageId: id,
+            type: typeId
+        })
+
+        if (id) {
+            this.getData(id)
+        }
+    }
+
+    getData(id) {
+        http.get(api.quoteGet, {
+            params: {
+                id: id
+            }
+        }).then(res => {
+            if (res.code == 1) {
+                let data = res.data
+                let companyId = data.company_id
+                let statusNum = res.data.status
+                console.log('statusNum: ', statusNum);
+                this.getQuotationOrder(data.inquiry_order_id)
+                this.getCheckData(id)
+                this.getTitleValue(data.pricing_offer_id)
+                this.setState({
+                    showData: data,
+                    company_id: companyId,
+                    statusNum
+                })
+            } else {
+                message.warning(res.message)
+            }
+        })
+    }
+
+    getQuotationOrder(id) {
+        http.get(api.productList + id + '/product/list').then(res => {
+            if (res.code == 1) {
+                let data = res.data.items
+                this.setState({
+                    proList: data
+                })
+            } else {
+                message.warning(res.message)
+            }
+        })
+    }
+
+    getTitleValue(id) {
+        http.get('/pods/admin/get?id=' + id).then(res => {
+            if (res.code == 1) {
+                let data = res.data
+                if (data == null) {
+                    data.company_name = ''
+                    data.name = ''
+                    data.mobile = ''
+                    data.email = ''
+                }
+                this.setState({ showTitle: data })
+            } else {
+                message.warning(res.message)
+            }
+        })
+    }
+
+    getCheckData = (id) => {
+        http.get('/quote/order/' + id + '/valid').then(res => {
+            if (res.code == 1) {
+                this.setState({ checkDay: res.data })
+            } else {
+                message.warning(res.message)
+            }
+
+        })
+    }
+    confirmQuotition = () => {
+        const { pageId, showData } = this.state
+        if (showData.attaches.length == 0) {
+            message.warning('客户未上传文件，请上传文件')
+            return
+        }
+
+        http.get(api.orderConfrim, {
+            params: {
+                id: pageId
+            }
+        }).then(res => {
+            if (res.code == 1) {
+                message.success('确认成功')
+                let history = this.props.history
+                setTimeout(function () {
+                    common.pathData.getPathData(
+                        {
+                            path: '/Quotation',
+                            data: {
+                                type: 1,
+                            },
+                            history: history
+                        }
+                    )
+                }, 1000)
+            } else {
+                message.warning(res.message)
+            }
+        })
+    }
+    // 上传
+    onChangeUpload = (info) => {
+        const { company_id } = this.state
+        const formData = new FormData();
+        formData.append('file', info.file);
+        formData.append('company_id', company_id);
+        http({
+            method: "post",
+            url: import.meta.env.VITE_FILE_SERVICE_HOST + '/file/upload',
+            processData: false,
+            data: formData,
+            headers: {
+                "Content-Type": "multipart/form-data"
+            }
+        }).then(res => {
+            if (res.code == 1) {
+                let data = res.data
+                data.filename = info.file.name
+                this.saveUpload(data)
+            } else {
+                message.warning(res.message)
+            }
+        })
+    }
+
+    saveUpload = (data) => {
+        const { pageId } = this.state
+        let params = {
+            filename: data.filename,
+            file_id: data.file_id,
+            storage_location: data.location,
+            inquiry_order_product_id: 0,
+            quotation_order_id: Number(pageId)
+        }
+
+        http.post(api.attachUpload, params).then(res => {
+            if (res.code == 1) {
+                message.success('上传成功')
+                this.getData(pageId)
+            } else {
+                message.warning(res.message)
+            }
+        })
+    }
+
+    downLoadFile = (id, storage_location) => {
+        common.downFile.down(id, storage_location)
+    }
+
+    deleteFile = (id) => {
+        const { pageId } = this.state
+        http.get(api.attachDelete, {
+            params: {
+                id: id
+            }
+        }).then(res => {
+            if (res.code == 1) {
+                message.success('删除成功')
+                this.getData(pageId)
+            } else {
+                message.warning(res.message)
+            }
+        })
+    }
+
+    backCheckPricePage = (data) => {
+
+        const { BackCheckPriceData } = this.state
+        BackCheckPriceData.name = data.name
+        BackCheckPriceData.product_id = data.id
+        this.setState({
+            isModalVisibleBackCheckPrice: true,
+            BackCheckPriceData
+        })
+    }
+
+    onChangeBackCheckPriceInput = (e) => {
+        const { BackCheckPriceData } = this.state
+        BackCheckPriceData.return_reason = e.target.value
+        this.setState({ BackCheckPriceData })
+    }
+
+    handleOkBackCheckPrice = () => {
+        const { BackCheckPriceData, pageId } = this.state
+        let params = {
+            id: parseInt(pageId),
+            product_id: BackCheckPriceData.product_id,
+            return_reason: BackCheckPriceData.return_reason
+        }
+        if (params.return_reason == "") {
+            message.warning('请输入退回原因')
+            return
+        }
+        let history = this.props.history
+        http.post('/quote/order/return/check', params).then(res => {
+            if (res.code == 1) {
+                message.success('退回成功')
+                common.pathData.getPathData(
+                    {
+                        path: '/Quotation',
+                        data: {
+                            type: 1,
+                        },
+                        history: history
+                    }
+                )
+            } else {
+                message.warning(res.message)
+            }
+        })
+
+
+    }
+
+    handleCancelBackCheckPrice = () => {
+        this.setState({ isModalVisibleBackCheckPrice: false })
+    }
+
+    BackProjectPage = (data) => {
+        const { BackProjectData } = this.state
+        BackProjectData.name = data.name
+        BackProjectData.product_id = data.id
+
+        this.setState({
+            isModalVisibleBackProject: true,
+            BackProjectData
+        })
+
+    }
+
+    onChangeBackProjectInput = (e) => {
+        const { BackProjectData } = this.state
+        BackProjectData.return_reason = e.target.value
+        this.setState({ BackProjectData })
+    }
+
+    handleOkBackProject = () => {
+        const { BackProjectData, pageId } = this.state
+        let params = {
+            id: parseInt(pageId),
+            product_id: BackProjectData.product_id,
+            return_reason: BackProjectData.return_reason
+        }
+        console.log('params: handleOkBackProject', params);
+        if (params.return_reason == "") {
+            message.warning('请输入退回原因')
+            return
+        }
+        let history = this.props.history
+        http.post('/quote/order/return/bom', params).then(res => {
+            if (res.code == 1) {
+                message.success('退回成功')
+                common.pathData.getPathData(
+                    {
+                        path: '/Quotation',
+                        data: {
+                            type: 1,
+                        },
+                        history: history
+                    }
+                )
+            } else {
+                message.warning(res.message)
+            }
+        })
+
+    }
+
+    handleCancelBackProject = () => {
+        this.setState({
+            isModalVisibleBackProject: false,
+        })
+    }
+
+    
+    render() {
+        const { proList, showData, type, checkDay, showTitle, isModalVisibleBackCheckPrice,
+            BackCheckPriceData, isModalVisibleBackProject, BackProjectData, statusNum } = this.state
+        const { TextArea } = Input;
+        const props = {
+            beforeUpload: file => {
+                return false;
+            },
+            onChange: this.onChangeUpload,
+        }
+
+        const columnsPro = [
             {
                 title: '产品名称',
                 dataIndex: 'name',
@@ -120,7 +434,6 @@ class look_quotation extends Component {
                         {record.check_price_order_details != null &&
                             record.check_price_order_details.map((e, index) => (
                                 <div key={index}>
-                                    {/* 显示 */}
                                     < div >
                                         <span>
                                             {e.actual_quote}
@@ -131,193 +444,38 @@ class look_quotation extends Component {
                         }
                     </div >
                 )
-            }
-        ],
-        proList: [],
-        company_id: '',
-        checkDay: 0,
-        showTitle: {}
-    }
-
-    componentDidMount() {
-        let id = common.common.getQueryVariable('id')
-        let typeId = common.common.getQueryVariable('type')
-        this.setState({
-            pageId: id,
-            type: typeId
-        })
-
-        if (id) {
-            this.getData(id)
-        }
-    }
-
-    getData(id) {
-        http.get(api.quoteGet, {
-            params: {
-                id: id
-            }
-        }).then(res => {
-            if (res.code == 1) {
-                let data = res.data
-                let companyId = data.company_id
-                this.getQuotationOrder(data.inquiry_order_id)
-                this.getCheckData(id)
-                this.getTitleValue(data.pricing_offer_id)
-                this.setState({
-                    showData: data,
-                    company_id: companyId
-                })
-            } else {
-                message.warning(res.message)
-            }
-        })
-    }
-
-    getQuotationOrder(id) {
-        http.get(api.productList + id + '/product/list').then(res => {
-            if (res.code == 1) {
-                let data = res.data.items
-                this.setState({
-                    proList: data
-                })
-            } else {
-                message.warning(res.message)
-            }
-        })
-    }
-
-    getTitleValue(id) {
-        http.get('/pods/admin/get?id=' + id).then(res => {
-            if (res.code == 1) {
-                let data = res.data
-                this.setState({ showTitle: data })
-            } else {
-                message.warning(res.message)
-            }
-        })
-    }
-
-
-
-    getCheckData = (id) => {
-        http.get('/quote/order/' + id + '/valid').then(res => {
-            if (res.code == 1) {
-                this.setState({ checkDay: res.data })
-            } else {
-                message.warning(res.message)
-            }
-
-        })
-    }
-
-
-    confirmQuotition = () => {
-        const { pageId, showData } = this.state
-        if (showData.attaches.length == 0) {
-            message.warning('客户未上传文件，请上传文件')
-            return
-        }
-
-        http.get(api.orderConfrim, {
-            params: {
-                id: pageId
-            }
-        }).then(res => {
-            if (res.code == 1) {
-                message.success('确认成功')
-                let history = this.props.history
-                setTimeout(function () {
-                    common.pathData.getPathData(
-                        {
-                            path: '/Quotation',
-                            data: {
-                                type: 1,
-                            },
-                            history: history
-                        }
-                    )
-                }, 1000)
-            } else {
-                message.warning(res.message)
-            }
-        })
-    }
-
-
-    // 上传
-    onChangeUpload = (info) => {
-        const { company_id } = this.state
-        const formData = new FormData();
-        formData.append('file', info.file);
-        formData.append('company_id', company_id);
-        http({
-            method: "post",
-            url: import.meta.env.VITE_FILE_SERVICE_HOST + '/file/upload',
-            processData: false,
-            data: formData,
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        }).then(res => {
-            if (res.code == 1) {
-                let data = res.data
-                data.filename = info.file.name
-                this.saveUpload(data)
-            } else {
-                message.warning(res.message)
-            }
-        })
-    }
-
-    saveUpload = (data) => {
-        const { pageId } = this.state
-        let params = {
-            filename: data.filename,
-            file_id: data.file_id,
-            storage_location: data.location,
-            inquiry_order_product_id: 0,
-            quotation_order_id: Number(pageId)
-        }
-
-        http.post(api.attachUpload, params).then(res => {
-            if (res.code == 1) {
-                message.success('上传成功')
-                this.getData(pageId)
-            } else {
-                message.warning(res.message)
-            }
-        })
-    }
-    downLoadFile = (id, storage_location) => {
-        common.downFile.down(id, storage_location)
-    }
-    deleteFile = (id) => {
-        const { pageId } = this.state
-        http.get(api.attachDelete, {
-            params: {
-                id: id
-            }
-        }).then(res => {
-            if (res.code == 1) {
-                message.success('删除成功')
-                this.getData(pageId)
-            } else {
-                message.warning(res.message)
-            }
-        })
-    }
-    render() {
-        const { columnsPro, proList, showData, type, checkDay, showTitle } = this.state
-
-        const props = {
-            beforeUpload: file => {
-                return false;
             },
-            onChange: this.onChangeUpload,
-        }
+            {
+                title: '操作',
+                width: 130,
+                render: (text, record) => {
+                    let backCheckPrice
+                    if ((statusNum != 7 || statusNum != 9) && record.status == 7) {
+                        backCheckPrice = <a onClick={() => this.backCheckPricePage(record)} style={{ color: 'red' }}>退回核价单</a>
+                    } else {
+                        backCheckPrice = <a style={{ color: '#ccc' }}>退回核价单</a>
+                    }
+                    let backProject
+                    if ((statusNum != 7 || statusNum != 9) && (record.status == 7 && record.source_attribute == 1)) {
+                        backProject = <a onClick={() => { this.BackProjectPage(record) }} style={{ color: 'red' }}>退回BOM</a>
+                    } else {
+                        backProject = <a style={{ color: '#ccc' }}>退回BOM</a>
+                    }
+                    return (
+                        <div>
+                            <div style={{ marginBottom: 5 }}>
+                                {backCheckPrice}
+                            </div>
+                            <div>
+                                {backProject}
+                            </div>
+                        </div>
+                    )
+                }
 
+            },
 
+        ]
         return (
             <div className='page'>
                 <div className='fs mb-15'>
@@ -398,6 +556,58 @@ class look_quotation extends Component {
                     </div>
 
                 }
+
+                <Modal title="退回核价单"
+                    visible={isModalVisibleBackCheckPrice}
+                    onOk={this.handleOkBackCheckPrice}
+                    onCancel={this.handleCancelBackCheckPrice}
+                    cancelText='取消'
+                    okText='确认'
+                    width={'600px'}
+                >
+                    <div>
+                        <div className='mb-15'>
+                            产品名称：{BackCheckPriceData.name}
+                        </div>
+                        <div className='fs'>
+                            <div style={{ width: 90 }}>退回原因：</div>
+                            <TextArea
+                                value={BackCheckPriceData.return_reason}
+                                placeholder="请输入退回原因"
+                                autoSize={{ minRows: 3, maxRows: 5 }}
+                                onChange={this.onChangeBackCheckPriceInput}
+                            />
+                        </div>
+                        <p style={{ marginLeft: '75px', marginTop: '15px' }}>注：退回核价后，报价单状态为【已退回】，询价产品状态为【核价中】，对应核价单状态为【核价中】，对应询价单状态为【核价中】，对应BOM工单状态为【核价中】。</p>
+                    </div>
+                </Modal>
+
+                <Modal title="退回BOM"
+                    visible={isModalVisibleBackProject}
+                    onOk={this.handleOkBackProject}
+                    onCancel={this.handleCancelBackProject}
+                    cancelText='取消'
+                    okText='确认'
+                    width={'600px'}
+                >
+                    <div>
+                        <div className='mb-15'>
+                            产品名称：{BackProjectData.name}
+                        </div>
+                        <div className='fs'>
+                            <div style={{ width: 90 }}>退回原因：</div>
+                            <TextArea
+                                value={BackProjectData.return_reason}
+                                placeholder="请输入退回原因"
+                                autoSize={{ minRows: 3, maxRows: 5 }}
+                                onChange={this.onChangeBackProjectInput}
+                            />
+                        </div>
+                        <p style={{ marginLeft: '75px', marginTop: '15px' }}>注：退回BOM后，报价单状态为【已退回】，询价产品状态为【报价BOM配置中】，对应核价单状态为【报价BOM配置中】，对应询价单状态为【待核价数据】，BOM工单状态为【BOM配置中】。</p>
+                    </div>
+                </Modal>
+
+
             </div >
         );
     }

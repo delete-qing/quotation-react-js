@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Table, message, Pagination, Input, Button, Select, Divider } from 'antd';
-import common from '../../../public/common';
+import common from '../common/common';
 import http from '../../http/index'
 import api from "../../http/httpApiName";
 import './product_price.css'
@@ -38,6 +38,7 @@ class index extends Component {
             },
             {
                 title: '产品名称',
+                width: 130,
                 render: (text, record) => (
                     <>
                         {
@@ -46,13 +47,11 @@ class index extends Component {
                         }
                     </>
                 ),
-                width: 200
             },
             {
                 title: '产品说明',
                 render: (text, record) => {
                     let show = []
-
                     record.product.options.forEach(e => {
                         let remark = ''
                         if (e.pivot.remark != '') {
@@ -103,7 +102,7 @@ class index extends Component {
                         </div>
                     )
                 },
-                width: 400
+                width: 300
             },
             {
                 title: '产品规格',
@@ -115,10 +114,11 @@ class index extends Component {
                         }
                     </>
                 ),
-                width: 200
+                width: 180
             },
             {
                 title: '计数单位',
+                width: 100,
                 render: (text, record) => (
                     <>
                         {
@@ -127,11 +127,15 @@ class index extends Component {
                         }
                     </>
                 ),
-                width: 150
             },
             {
                 title: '核价状态',
                 dataIndex: 'status_desc',
+                width: 150,
+            },
+            {
+                title: 'PE人员',
+                dataIndex: 'pe_person_name',
                 width: 150,
             },
             {
@@ -196,11 +200,6 @@ class index extends Component {
                 width: 150,
             },
             {
-                title: '相关单号',
-                dataIndex: 'related_number',
-                width: 150,
-            },
-            {
                 title: '匹配物料编号',
                 render: (text, record) => (
                     <>
@@ -236,7 +235,7 @@ class index extends Component {
                 width: 200,
             },
             {
-                title: '核价有效期',
+                title: '核价有效期(天)',
                 dataIndex: 'valid_period_day',
                 width: 150,
             },
@@ -244,7 +243,6 @@ class index extends Component {
                 title: '操作',
                 width: 150,
                 fixed: 'right',
-                align: 'center',
                 render: (text, record) => {
                     let look
                     let config
@@ -265,6 +263,7 @@ class index extends Component {
                         check = <a style={{ color: '#ccc' }}>核价</a>
                     }
 
+
                     return (
                         <div>
                             <div className='mb-5'>
@@ -277,6 +276,7 @@ class index extends Component {
                                 < Divider type="vertical" />
                                 {analyze}
                             </div>
+
 
                         </div >
                     )
@@ -291,7 +291,7 @@ class index extends Component {
             current: 1,
             pageSize: 10,
         },
-        pageSizeOptions: [10, 12, 15, 20],
+        pageSizeOptions: [5, 10, 15, 20],
         serach: {
             number: '',
             related_number: '',
@@ -299,6 +299,8 @@ class index extends Component {
             related_type: '',
             customer_name: '',
             product_name: '',
+            product_number: '',
+            pe_person_name: '',
         },
         statuslist: [],
         relatedTypeOption: [
@@ -314,16 +316,17 @@ class index extends Component {
                 id: 2,
                 name: '精准询价 '
             }
-        ]
+        ],
+        type: 1,
     }
     componentDidMount() {
         this.getList()
         this.getStatus()
     }
 
-    getList() {
+    getList(type = 1) {
         const { pagination, serach } = this.state
-        http.get(api.checkList, {
+        http.get(api.checkList[type], {
             params: {
                 per_page: pagination.pageSize,
                 page: pagination.current,
@@ -332,7 +335,9 @@ class index extends Component {
                 status: serach.status,
                 related_type: serach.related_type,
                 product_name: serach.product_name,
-                customer_name: serach.customer_name
+                customer_name: serach.customer_name,
+                product_number: serach.product_number,
+                pe_person_name: serach.pe_person_name
             }
         }).then(res => {
             if (res.code == 1) {
@@ -356,28 +361,24 @@ class index extends Component {
                 history: history
             }
         )
-
-        // this.props.history.push('/priceList?id=' + id)
     }
-
     onChangePage = (page, pageSize) => {
-        const { pagination } = this.state
+        const { pagination, type } = this.state
         pagination.current = page
         pagination.pageSize = pageSize
         this.setState({ pagination })
-        this.getList()
+        this.getList(type)
     }
-
     changeSerachInput = (e) => {
         const { serach } = this.state
         serach[e.target.name] = e.target.value
         this.setState({ serach })
     }
-    serchIt = () => {
+    serchIt = (type) => {
         const { pagination } = this.state
         pagination.current = 1
-        this.setState({ pagination })
-        this.getList()
+        this.setState({ pagination, type })
+        this.getList(type)
     }
     // 获取状态
     getStatus() {
@@ -388,7 +389,6 @@ class index extends Component {
             } else {
                 message.warning(res.message)
             }
-
         })
     }
     handleChangeOption = (value) => {
@@ -414,9 +414,7 @@ class index extends Component {
                 history: history
             }
         )
-
     }
-
     goAnalyze = (id) => {
         let history = this.props.history
         common.pathData.getPathData(
@@ -429,10 +427,7 @@ class index extends Component {
                 history: history
             }
         )
-
     }
-
-
 
     render() {
         const { listData, columns, pagination, pageSizeOptions, statuslist, relatedTypeOption } = this.state
@@ -441,17 +436,24 @@ class index extends Component {
             <div className="page">
                 <div className='mb-15 fs'>
                     <div className='mr-15'>
-                        <span>客户名称：</span>
-                        <Input name='customer_name' onChange={this.changeSerachInput} className="w200" placeholder="请输入客户名称" />
+                        <span>核价单号：</span>
+                        <Input name='number' onChange={this.changeSerachInput} className="w200" placeholder="请输入核价单号" />
                     </div>
                     <div className='mr-15'>
                         <span>询价单号：</span>
                         <Input name='related_number' onChange={this.changeSerachInput} className="w200" placeholder="请输入询价单号" />
                     </div>
                     <div className='mr-15'>
-                        <span>核价单号：</span>
-                        <Input name='number' onChange={this.changeSerachInput} className="w200" placeholder="请输入核价单号" />
+                        <span>客户名称：</span>
+                        <Input name='customer_name' onChange={this.changeSerachInput} className="w200" placeholder="请输入客户名称" />
                     </div>
+                    <div className='mr-15'>
+                        <span>产品编号：</span>
+                        <Input name='product_number' onChange={this.changeSerachInput} className="w200" placeholder="请输入产品编号" />
+                    </div>
+                </div>
+                <div className='mb-15 fs'>
+
                     <div className='mr-15'>
                         <span>核价状态：</span>
                         <Select style={{ width: 200 }} onChange={this.handleChangeOption} placeholder="请选择">
@@ -461,14 +463,6 @@ class index extends Component {
                             }
                         </Select>
                     </div>
-                </div>
-                <div className='mb-15 fs'>
-                    <div className='mr-15'>
-                        <span>产品名称：</span>
-                        <Input name='product_name' onChange={this.changeSerachInput} className="w200" placeholder="请输入产品名称" />
-                    </div>
-
-
                     <div className='mr-15'>
                         <span>相关类型：</span>
                         <Select style={{ width: 200 }} onChange={this.handleChangeRelatedTypeOption} placeholder="请选择">
@@ -478,8 +472,17 @@ class index extends Component {
                             }
                         </Select>
                     </div>
+                    <div className='mr-15'>
+                        <span>P&nbsp;E&nbsp;&nbsp;人&nbsp;员：</span>
+                        <Input name='pe_person_name' onChange={this.changeSerachInput} className="w200" placeholder="请输入PE人员" />
+                    </div>
+                    <div className='mr-15'>
+                        <span>产品名称：</span>
+                        <Input name='product_name' onChange={this.changeSerachInput} className="w200" placeholder="请输入产品名称" />
+                    </div>
                     <div>
-                        <Button type="primary" onClick={this.serchIt}>搜索</Button>
+                        <Button type="primary" onClick={() => this.serchIt(1)}>搜索</Button>
+                        <Button type="primary" className='ml-15' onClick={() => this.serchIt(2)}>搜索公司全部相关信息</Button>
                     </div>
                 </div>
                 <Table rowKey={record => record.id} columns={columns} dataSource={listData} scroll={{ x: 3500 }} pagination={false} />

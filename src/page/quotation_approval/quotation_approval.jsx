@@ -8,8 +8,13 @@ export default class quotation_approval extends Component {
     state = {
         columnsList: [
             {
-                title: '报价折扣',
-                dataIndex: 'discount_rate',
+                title: '利润率（%）',
+                dataIndex: '',
+                render: (text, record) => (
+                    <div>
+                        <span> 小于等于 {record.discount_rate}%</span>
+                    </div>
+                ),
             },
             {
                 title: '审批人员',
@@ -257,13 +262,13 @@ export default class quotation_approval extends Component {
                     </div>
                 </div>
                 <div>
-                    <Modal title="新建折扣" visible={isModalVisible} onOk={this.handleOkAdd} onCancel={this.handleCancelAdd}
+                    <Modal title="新建利润率" visible={isModalVisible} onOk={this.handleOkAdd} onCancel={this.handleCancelAdd}
                         cancelText="取消" okText="确定" width={800}>
                         <div>
                             {discountArr.map((d, index) => (
                                 <div key={index} className="fs mb-15">
                                     <div className="mr-20">
-                                        <span>折扣大于等于：</span>
+                                        <span>利润率小于等于：</span>
                                         <InputNumber
                                             value={d.discount_rate}
                                             min={0}
@@ -299,7 +304,7 @@ export default class quotation_approval extends Component {
                         cancelText="取消" okText="确定" width={800}>
                         <div className="fs">
                             <div className="mr-20">
-                                <span>折扣大于等于：</span>
+                                <span>利润率小于等于：</span>
                                 <InputNumber
                                     value={editShow.discount_rate}
                                     min={0}

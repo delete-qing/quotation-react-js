@@ -3,7 +3,7 @@ import { Table, Button, Select, message, Input } from 'antd';
 import { EditTwoTone } from '@ant-design/icons';
 import http from '../../../http/index'
 import api from '../../../http/httpApiName'
-import common from '../../../../public/common';
+import common from '../../common/common';
 import '../quotation.css'
 
 
@@ -13,7 +13,6 @@ export default class index extends Component {
 
     state = {
         pageId: '',
-
         proList: [],
         editArr: [],
         showData: {
@@ -21,6 +20,7 @@ export default class index extends Component {
             inquiry_order: {}
         },
         remark: '',
+        statusNum: '',
     }
 
     componentDidMount() {
@@ -40,9 +40,12 @@ export default class index extends Component {
         }).then(res => {
             if (res.code == 1) {
                 let data = res.data
+                let statusNum = res.data.status
+                console.log('statusNum: ', statusNum);
                 this.getQuotationOrder(data.inquiry_order_id)
                 this.setState({
                     showData: data,
+                    statusNum
 
                 })
             } else {
@@ -58,6 +61,8 @@ export default class index extends Component {
                 data.forEach(e => {
                     e.check_price_order_details.forEach(i => {
                         i.show = 0
+                        i.actualUnitquote = 0
+
                     })
                 })
                 this.setState({
@@ -69,10 +74,12 @@ export default class index extends Component {
         })
 
     }
+
     changeRemark = (e) => {
         this.setState({ remark: e.target.value })
 
     }
+
     commit = (type) => {
         const { proList, pageId, remark } = this.state
         let params = {
@@ -86,7 +93,7 @@ export default class index extends Component {
                 params.details.push(
                     {
                         id: Number(i.id),
-                        actual_quote: Number(i.actual_quote)
+                        actual_unit_quote: Number(i.actual_unit_quote)
                     }
                 )
             })
@@ -126,41 +133,89 @@ export default class index extends Component {
 
     }
 
-
     isShow = (index, index1) => {
         const { proList } = this.state
         let data = proList[index].check_price_order_details[index1]
-        if (data.show == 0) {
-            data.show = 1
+        if (data.actualUnitquote == 0) {
+            data.actualUnitquote = 1
         } else {
-            data.show = 0
+            data.actualUnitquote = 0
         }
-
         this.setState({ proList })
     }
 
     changeaCtualQuote = (event, index, data) => {
         const { proList } = this.state
-        data.actual_quote = event.target.value
+        data.actual_unit_quote = event.target.value
         this.setState({ proList })
     }
 
-
-
-
     render() {
-        const { proList, showData } = this.state
+        const { proList, showData, } = this.state
         const { Option } = Select;
         const { TextArea } = Input;
 
         const columnsPro = [
             {
                 title: '产品名称',
+                width: 150,
                 dataIndex: 'name',
             },
             {
                 title: '产品编号',
                 dataIndex: 'number',
+            },
+            {
+                title: '产品说明',
+                width: 150,
+                render: (text, record) => {
+                    let show = []
+                    record.options.forEach(e => {
+                        show.push(
+                            {
+                                name: e.param.name,
+                                pid: e.param.id,
+                                child: [
+                                    {
+                                        name: e.name
+                                    }
+                                ]
+                            }
+                        )
+                    })
+                    let list = {}
+                    show.forEach(i => {
+                        if (list[i.pid]) {
+                            list[i.pid].child.push(...i.child)
+                        } else {
+                            list[i.pid] = i
+                        }
+
+                    })
+
+                    let data = []
+                    for (let key in list) {
+                        let name = []
+                        for (let keyChild in list[key].child) {
+                            name.push(list[key].child[keyChild].name)
+                        }
+                        list[key].child = name.join('，')
+                        data.push(list[key])
+                    }
+
+                    return (
+                        <div>
+                            {
+                                data.map((e, index) => (
+                                    <div key={index}>
+                                        {e.name}（{e.child}）
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    )
+
+                },
             },
             {
                 title: '产品规格',
@@ -172,6 +227,7 @@ export default class index extends Component {
             },
             {
                 title: '核价有效期',
+                width: 110,
                 dataIndex: 'expire_date',
 
             },
@@ -218,29 +274,42 @@ export default class index extends Component {
                 )
             },
             {
-                title: '报价金额(元)',
-                width: 260,
+                title: '报价含税单价(元)',
                 render: (text, record, index) => (
                     <div>
                         {record.check_price_order_details != null &&
                             record.check_price_order_details.map((e, index1) => (
                                 <div key={index1}>
-                                    {e.show == 0 &&
+                                    {e.actualUnitquote == 0 &&
                                         < div >
                                             <span>
-                                                {e.actual_quote}
+                                                {e.actual_unit_quote}
                                                 <EditTwoTone className="ml-10" onClick={() => this.isShow(index, index1)} />
                                             </span>
                                         </div>
                                     }
 
 
-                                    {e.show == 1 &&
+                                    {e.actualUnitquote == 1 &&
                                         <div key={index1} className='mb-5'>
-                                            <Input className="w100 mr-10" value={e.actual_quote}
+                                            <Input className="w100 mr-10" value={e.actual_unit_quote}
                                                 onChange={(event) => this.changeaCtualQuote(event, index, e)} onBlur={() => this.isShow(index, index1)} />
                                         </div>
                                     }
+                                </div>
+                            ))
+                        }
+                    </div>
+                )
+            },
+            {
+                title: '报价总金额(元)',
+                render: (text, record, index) => (
+                    <div>
+                        {record.check_price_order_details != null &&
+                            record.check_price_order_details.map((e, index1) => (
+                                <div key={index1}>
+                                    {e.actual_unit_quote * e.quantity}
                                 </div>
                             ))
                         }
@@ -248,23 +317,35 @@ export default class index extends Component {
                 )
             },
             {
-                title: '报价折扣(%)',
+                title: '利润率(%)',
                 render: (text, record) => (
                     <div>
                         {record.check_price_order_details != null &&
-                            record.check_price_order_details.map((e, index) => (
-                                <div key={index}>
-                                    {(1 - e.actual_quote / e.total_quote) * 100}
-                                </div>
-                            ))
+                            record.check_price_order_details.map((e, index) => {
+                                let show
+                                if (e.actual_unit_quote == 0) {
+                                    show = <div key={index}>0</div>
+                                } else {
+                                    show = <div key={index}>
+                                        {((((e.actual_unit_quote * e.quantity) - e.total_cost) / (e.actual_unit_quote * e.quantity)) * 100).toFixed(2) + '%'}
+                                    </div>
+                                }
+                                return (
+                                    <div key={index}>
+                                        {show}
+                                    </div>
+                                )
+
+                            })
                         }
-                    </div>
+                    </div >
                 )
-            }
+            },
+
         ]
 
         return (
-            <div className="page">
+            <div className="page" >
                 <div>
                     <div className="top-block mb-15 fs">
                         <h3 className='db mr-50 fw'>客户名称：{showData.customer_name}</h3>
@@ -344,6 +425,7 @@ export default class index extends Component {
                         <Button type="primary" size='large' onClick={() => this.commit(2)}>提交</Button>
                     </div>
                 </div>
+                {/* 弹出框 */}
             </div>
         )
     }

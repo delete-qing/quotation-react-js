@@ -1,4 +1,5 @@
-import http from '../src/http/index'
+import http from '../../http/index'
+import { message } from 'antd';
 
 // 获取id
 const common = {
@@ -74,7 +75,23 @@ const clone = {
 
 
 
-// 输入框
+// 将字符串转换成数字数组
+const getAsStringToArray = {
+    toArray: function (str = '', symbol) {
+
+        var arr = [];
+        if (str === '') {
+            return arr;
+        }
+
+        str.split(symbol).forEach(item => {
+            arr.push(parseInt(item));
+        });
+
+        return arr;
+    }
+}
+
 
 
 
@@ -84,6 +101,7 @@ export default
         common,
         pathData,
         downFile,
-        clone
+        clone,
+        getAsStringToArray
     }
 

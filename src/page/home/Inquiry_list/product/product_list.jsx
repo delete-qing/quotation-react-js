@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import { Table, message } from 'antd';
+import { Table, message, Button, Input, Pagination } from 'antd';
 import http from '../../../../http/index'
 import api from '../../../../http/httpApiName'
-import common from '../../../../../public/common';
+import common from '../../../common/common';
 
 
 class product_listjsx extends Component {
@@ -146,7 +146,17 @@ class product_listjsx extends Component {
                 }
             },
         ],
-        list: []
+        list: [],
+        searchData: {
+            name: '',
+            number: '',
+        },
+        pagination: {
+            total: 0,
+            current: 1,
+            pageSize: 15,
+        },
+        pageSizeOptions: [10, 15, 20, 25],
 
     }
 
@@ -156,18 +166,32 @@ class product_listjsx extends Component {
 
 
     getList() {
-        http.get('/inquiry/product/list').then(res => {
+        const { searchData, pagination } = this.state
+        http.get('/inquiry/product/list', {
+            params: {
+                name: searchData.name,
+                number: searchData.number,
+                per_page: pagination.pageSize,
+                page: pagination.current,
+            }
+        }).then(res => {
             if (res.code == 1) {
                 let data = res.data.items
-                this.setState({ list: data })
+                pagination.total = res.data.total
+                this.setState({ list: data, pagination })
             } else {
                 message.warning(res.message)
             }
         })
     }
 
-
-
+    onChangePage = (page, pageSize) => {
+        const { pagination } = this.state
+        pagination.current = page
+        pagination.pageSize = pageSize
+        this.setState({ pagination })
+        this.getList()
+    }
     goLookPage(data) {
         let history = this.props.history
         common.pathData.getPathData(
@@ -182,14 +206,44 @@ class product_listjsx extends Component {
             }
         )
     }
+    searchPage = (e) => {
+        console.log('e: ', e);
+        const { searchData } = this.state
+        searchData[e.target.name] = e.target.value
+        console.log('searchData: ', searchData);
+        this.setState({ searchData })
 
+    }
 
+    searchList = () => {
+        const { pagination } = this.state
+        pagination.current = 1
+        this.setState({ pagination })
+        this.getList()
+    }
 
     render() {
-        const { columns, list } = this.state
+        const { columns, list, pagination, pageSizeOptions } = this.state
         return (
             <div className='page'>
-                <Table rowKey={record => record.id} columns={columns} dataSource={list} scroll={{ x: 3300 }} />
+
+                <div className='mb-15 fs'>
+                    <div className='fs'>
+                        <span className='lh-32'>产品名称：</span>
+                        <Input name='name' className='w200' placeholder="请输入产品名称" onChange={this.searchPage} />
+                    </div>
+                    <div className='fs ml-15'>
+                        <span className='lh-32'>产品编号：</span>
+                        <Input name='number' className='w200' placeholder="请输入产品编号" onChange={this.searchPage} />
+                    </div>
+                    <Button type="primary" className='ml-20' onClick={this.searchList}>搜索</Button>
+                </div>
+
+                <Table rowKey={record => record.id} columns={columns} dataSource={list} scroll={{ x: 3300 }} pagination={false} />
+                <div style={{ display: 'flex', justifyContent: 'end', marginTop: '15px' }}>
+                    <Pagination current={pagination.current} total={pagination.total}
+                        pageSize={pagination.pageSize} onChange={this.onChangePage} pageSizeOptions={pageSizeOptions} showSizeChanger />
+                </div>
             </div>
         );
     }

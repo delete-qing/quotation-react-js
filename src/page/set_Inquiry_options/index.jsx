@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
-import { Table, Switch, Button, Modal, Input, Divider, Select, message, Popconfirm } from 'antd';
+import { Table, Switch, Button, Modal, Input, Divider, Select, message, Popconfirm, Pagination } from 'antd';
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import http from '../../http/index'
 import api from "../../http/httpApiName";
-import common from '../../../public/common'
+import common from '../common/common'
 import './index.css'
 
 class index extends Component {
@@ -51,6 +51,14 @@ class index extends Component {
                 ),
             },
             {
+                title: '是否必选',
+                render: (text, record) => (
+                    <Switch checkedChildren="是" unCheckedChildren="否"
+                        onChange={() => this.isRequired(record)}
+                        defaultChecked={record.is_required} />
+                ),
+            },
+            {
                 title: '操作',
                 render: (text, record) => <div>
                     <a onClick={() => this.editData(record)}>编辑</a>
@@ -82,6 +90,12 @@ class index extends Component {
 
         ],
         id: undefined,
+        pagination: {
+            total: 0,
+            current: 1,
+            pageSize: 10,
+        },
+        pageSizeOptions: [5, 10, 10, 20],
     }
 
 
@@ -89,15 +103,29 @@ class index extends Component {
         this.getList()
     }
     getList() {
-        http.get(api.inquiryOptionsList).then(res => {
+        const { pagination } = this.state
+        http.get(api.inquiryOptionsList, {
+            params: {
+                per_page: pagination.pageSize,
+                page: pagination.current,
+            }
+        }).then(res => {
             if (res.code == 1) {
-                const { list } = this.state
                 let data = res.data.items
+                pagination.total = res.data.total
                 this.setState({ list: data })
             }
 
         })
     }
+    onChangePage = (page, pageSize) => {
+        const { pagination } = this.state
+        pagination.current = page
+        pagination.pageSize = pageSize
+        this.setState({ pagination })
+        this.getList()
+    }
+
     isStop(record) {
         let isUsage
         if (record.is_usage == true) {
@@ -121,6 +149,32 @@ class index extends Component {
 
         })
     }
+
+    isRequired(record) {
+        let isRequired = false
+        if (record.is_required == true) {
+            isRequired = false
+        } else {
+            isRequired = true
+        }
+        http.get('inquiry/param/require', {
+            params: {
+                id: record.id,
+                is_required: isRequired
+
+            }
+        }).then(res => {
+            if (res.code == 1) {
+                message.success('设置成功')
+                this.getList()
+            } else {
+                message.warning(res.message)
+            }
+
+        })
+    }
+
+
     deleteIt(record) {
         http.get(api.inquiryDelete, {
             params: {
@@ -251,7 +305,7 @@ class index extends Component {
     }
 
     render() {
-        const { list, isModalVisible, optionName, columns, name, selectId, options } = this.state
+        const { list, isModalVisible, optionName, columns, name, selectId, options, pagination, pageSizeOptions } = this.state
         const { Option } = Select;
 
         if (optionName.length == 0) {
@@ -273,7 +327,11 @@ class index extends Component {
                         {/* <Input onChange={e => this.getInputNameValue(e)} defaultValue={name} className="w200" /> */}
                     </div>
                     <div>
-                        <Table rowKey={record => record.id} columns={columns} dataSource={list} />
+                        <Table rowKey={record => record.id} columns={columns} dataSource={list} pagination={false} />
+                        <div style={{ display: 'flex', justifyContent: 'end', marginTop: '15px' }}>
+                            <Pagination current={pagination.current} total={pagination.total}
+                                pageSize={pagination.pageSize} onChange={this.onChangePage} pageSizeOptions={pageSizeOptions} showSizeChanger />
+                        </div>
                     </div>
                     <div>
                         <Modal title="新建" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel} okText="确定" cancelText="取消" destroyOnClose="true" width={800}>

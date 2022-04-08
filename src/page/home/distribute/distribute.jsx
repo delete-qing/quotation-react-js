@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Table, Button, Modal, Select, message } from 'antd';
-import common from '../../../../public/common'
+import common from '../../common/common'
 import http from '../../../http'
 import api from '../../../http/httpApiName'
 import '../index.css'
@@ -295,8 +295,9 @@ export default class index extends Component {
 
     saveIt = () => {
         const { confirm } = Modal;
-        const { pageId } = this.state
+        const { pageId, showData } = this.state
         let history = this.props.history
+        let that = this
         confirm({
             title: '您确定要提交当前询价单么？提交之后将不可再次分配当前询价单。',
             okText: '确定',
@@ -308,11 +309,17 @@ export default class index extends Component {
                     }
                 }).then(res => {
                     if (res.code == 1) {
+                        let idArr = res.data
+                        if (showData.project_file_person_id != 0 && idArr.length != 0) {
+                            idArr.forEach(e => {
+                                that.commitProject(e.work_order_id)
+                            })
+                        }
                         message.success('提交成功')
                         setTimeout(function () {
                             common.pathData.getPathData(
                                 {
-                                    path: '/productPrice',
+                                    path: '/Home',
                                     data: {
                                         type: 1
                                     },
@@ -326,6 +333,20 @@ export default class index extends Component {
                 })
             },
         });
+    }
+
+    commitProject(id) {
+        const { showData } = this.state
+        let params = {
+            id: id,
+            project_file_person_id: showData.project_file_person_id,
+        }
+        http.post(api.bomAssign, params).then(res => {
+            if (res.code == 1) {
+            } else {
+                message.warning(res.message)
+            }
+        })
     }
 
     tabDownLoad(id, storage_location) {
@@ -352,6 +373,9 @@ export default class index extends Component {
                         </span>
                         <span className="title-block w300">
                             销售人员：{showData.salesperson_name}
+                        </span>
+                        <span className="title-block w300">
+                            工程配置：{showData.project_file_person_name}
                         </span>
                     </div>
                     <div className='mb-15'>

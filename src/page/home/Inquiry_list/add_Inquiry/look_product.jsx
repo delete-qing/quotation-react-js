@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { message } from 'antd';
-import { MinusCircleOutlined, PlusCircleOutlined, UploadOutlined, DeleteOutlined } from '@ant-design/icons';
+import { DeleteOutlined } from '@ant-design/icons';
 import http from '../../../../http/index'
 import api from '../../../../http/httpApiName'
-import common from '../../../../../public/common';
+import common from '../../../common/common';
 
 class look_product extends Component {
 
@@ -102,7 +102,7 @@ class look_product extends Component {
 
     render() {
 
-        const { showData, optionsArr } = this.state
+        const { showData } = this.state
 
         return (
             <div className='page'>

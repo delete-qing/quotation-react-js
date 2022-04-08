@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Table, message, Tabs, Button, Radio, } from 'antd';
 import http from '../../../http'
 import api from '../../../http/httpApiName'
-import common from '../../../../public/common'
+import common from '../../common/common'
 
 
 
@@ -147,14 +147,12 @@ class analyze extends Component {
         token: '',
     }
 
-
     componentDidMount() {
         let id = common.common.getQueryVariable('id')
         this.setState({ pageId: id })
         this.getData(id)
         this.getlocation()
     }
-
 
     getData(id) {
         http.get(api.checkGet, {
@@ -212,9 +210,6 @@ class analyze extends Component {
                     resutlList.push(resultMap[key]);
                 }
                 data.show = resutlList
-                console.log('resutlList: ', resutlList);
-
-
                 this.setState({ showData: data })
             } else {
                 message.warning(res.message);
@@ -248,8 +243,6 @@ class analyze extends Component {
         }).then(res => {
             if (res.code == 1) {
                 let data = res.data
-                console.log('data: ', data);
-
                 let dataMap = {}
                 let costMap = {}
                 data.forEach((e, index) => {
@@ -309,7 +302,6 @@ class analyze extends Component {
                     componentTitleList: dataList,
                     costList: costList,
                     quantity: num
-
                 })
             } else {
                 message.warning(res.message)
@@ -322,6 +314,7 @@ class analyze extends Component {
     onChange = (e) => {
         this.setState({ value: e.target.value })
     }
+
     getlocation() {
         let token = ''
         let query = location.search.substring(1)
@@ -336,10 +329,35 @@ class analyze extends Component {
         this.setState({ token })
     }
 
+    down = () => {
+        const { bom_id, quantity, pageId, token } = this.state
+        http.get(import.meta.env.VITE_APP_QUOTATION_HOST + '/check/order/cost/analyze/excel', {
+            params: {
+                id: Number(pageId),
+                bom_id: bom_id,
+                quantity: quantity
+            },
+            headers: {
+                'Authorization': token
+            },
+            responseType: 'blob'
+        }).then(res => {
+            const blob = new Blob([res.data]);//处理文档流
+            const fileName = '成本分析.xlsx';
+            const elink = document.createElement('a');
+            elink.download = fileName;
+            elink.style.display = 'none';
+            elink.href = URL.createObjectURL(blob);
+            document.body.appendChild(elink);
+            elink.click();
+            URL.revokeObjectURL(elink.href); // 释放URL 对象
+            document.body.removeChild(elink);
+        })
+    }
 
     render() {
         const { showData, checkData, value, componentColumns, componentAnalyzeColumns, costColumns, costAnalyzeColumns,
-            comprehensivColumns, comprehensivAnalyzeColumns, componentTitleList, costList, list, id, bom_id, quantity, token } = this.state
+            comprehensivColumns, comprehensivAnalyzeColumns, componentTitleList, costList, list, } = this.state
         const { TabPane } = Tabs;
         return (
             <div className='page'>
@@ -418,7 +436,7 @@ class analyze extends Component {
                                             </div>
 
                                             <div>
-                                                <a href={import.meta.env.VITE_APP_QUOTATION_HOST + '/check/order/cost/analyze/excel?id=' + id + '&bom_id=' + bom_id + '&quantity=' + quantity + '&Authorization=' + token} target="_blank">下载</a>
+                                                <a onClick={this.down}>下载</a>
                                             </div>
                                         </div>
 

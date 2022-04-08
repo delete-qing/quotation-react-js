@@ -73,7 +73,6 @@ const EditableTable = () => {
                 setEditingKey('');
             }
         } catch (errInfo) {
-            console.log('Validate Failed:', errInfo);
         }
     };
 
@@ -192,13 +191,39 @@ class init extends Component {
             },
         ],
         proList: [],
-
-
         editArr: [],
+        arr: [],
+        dataArr: []
     }
 
     componentDidMount() {
         this.getShowData()
+        this.addArr()
+    }
+
+    addArr() {
+        let data = []
+        let dataArr = []
+        for (let i = 1; i < 201; i++) {
+            if (i % 10 == 7 || i / 10 % 10 == 7 || i % 7 == 0) {
+                console.log('i: ', i);
+                data.push({
+                    name: i,
+                    color: 'red'
+                })
+            } else {
+                data.push({
+                    name: i,
+                    color: ''
+                })
+            }
+
+            dataArr.push(i)
+        }
+        this.setState({
+            arr: data,
+            dataArr
+        })
     }
     // 报价单详情
     getShowData(id) {
@@ -239,9 +264,6 @@ class init extends Component {
         })
 
     }
-
-
-
     // 渲染出来input,输入的时候改变dataSource的数据
     renderInput = (text, record, index, field) => {
         const { editArr } = this.state;
@@ -292,12 +314,8 @@ class init extends Component {
         this.setState({ proList: newData });
     };
 
-
-
-
-
     render() {
-        const { proList, columnsPro } = this.state
+        const { proList, columnsPro, arr, dataArr } = this.state
 
 
         const columns = [
@@ -344,6 +362,16 @@ class init extends Component {
             },
         ];
 
+        let show = []
+        dataArr.forEach((i, index) => {
+            if (i % 10 == 7 || i / 10 % 10 == 7 || i % 7 == 0) {
+                show.push(<a key={index} style={{ color: 'red', margin: 10 }}>{i}，</a>)
+            } else {
+                show.push(<a style={{ margin: 10 }} key={index}>{i}，</a>)
+            }
+        })
+
+
         return (
             <div>
                 <div className="mb-15">
@@ -357,7 +385,15 @@ class init extends Component {
                     dataSource={this.state.proList}
                     columns={columns}
                 />
+                <div style={{ width: '800px', marginLeft: 300, marginBottom: 100 }}>
+                    {/* {
+                        arr.map((e, index) => (
+                            <span style={{ color: e.color }} key={index}>{e.name}，</span>
+                        ))
+                    } */}
 
+                    {show}
+                </div>
 
             </div >
         );

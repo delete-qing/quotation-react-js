@@ -4,8 +4,9 @@ import { Table, message, Tabs, Button, Input, Modal, Tag, Tooltip } from 'antd';
 import { EditTwoTone, LeftOutlined, DownOutlined } from '@ant-design/icons';
 import http from '../../../http'
 import api from '../../../http/httpApiName'
-import common from '../../../../public/common'
+import common from '../../common/common'
 import TreeTag from '../../common/tree'
+import CategoryAndMaterial from '../../common/categoryAndMaterial'
 import '../product_price.css'
 
 
@@ -37,6 +38,7 @@ class index extends Component {
             },
             {
                 title: '产品名称',
+                width: 150,
                 render: (text, record) => <span>{record.product.name}</span>,
             },
             {
@@ -45,10 +47,12 @@ class index extends Component {
             },
             {
                 title: '客户名称',
+                width: 100,
                 dataIndex: 'customer_name',
             },
             {
                 title: '联系人',
+                width: 100,
                 render: (text, record) => <span>{record.inquiry_order.customer_representative_name}</span>,
             },
             {
@@ -61,17 +65,26 @@ class index extends Component {
             },
             {
                 title: '交付方式',
+                width: 90,
                 render: (text, record) => <span>{record.inquiry_order.delivery_mode_desc}</span>,
             },
             {
                 title: '运输方式',
+                width: 90,
                 render: (text, record) => <span>{record.inquiry_order.transport_mode_desc}</span>,
             },
+            {
+                title: '备注',
+                width: 120,
+                render: (text, record) => <span>{record.inquiry_order.remark}</span>,
+            },
+
         ],
         listData: [],
         columnsPro: [
             {
                 title: '产品名称',
+                width: 150,
                 dataIndex: 'name',
             },
             {
@@ -89,7 +102,7 @@ class index extends Component {
             },
             {
                 title: '询价数量',
-                width: 70,
+                width: 100,
                 render: (text, record) => (
                     <div>
                         {record.quantities.map(e => (
@@ -97,14 +110,13 @@ class index extends Component {
                                 {e.quantity}{e.unit}
                             </div>
                         ))
-
                         }
                     </div>
                 ),
             },
             {
                 title: '包装要求',
-                width: 280,
+                width: 260,
                 render: (text, record) => {
                     let show
                     show = <>
@@ -175,28 +187,33 @@ class index extends Component {
                 width: 120,
                 render: (text, record) => (
                     <div>
-                        <span> {record.component_name}（{record.format_name}）</span>
+                        <span> {record.component_name}({record.format_name})</span>
                     </div>
                 )
             },
             {
-                title: '主材名称',
+                title: '特性',
+                width: 150,
                 render: (text, record) => (
-                    <div className='ellipsis-line w100'>
-                        <Tooltip placement="topLeft" title={record.name}>
-                            {record.name}
-                        </Tooltip>
-
+                    <div>
+                        <span> {record.character}</span>
                     </div>
-                ),
-                width: 120
+                )
+
+            },
+            {
+                title: '主材名称',
+                dataIndex: 'name',
+                width: 180,
             },
             {
                 title: '物料编号',
+                width: 120,
                 dataIndex: 'show_sku_number',
             },
             {
                 title: '主材规格',
+                width: 110,
                 dataIndex: 'specification',
             },
             {
@@ -210,11 +227,6 @@ class index extends Component {
                 dataIndex: 'measurement_unit',
             },
             {
-                title: '理论数量(不含损耗)',
-                width: 100,
-                dataIndex: 'theory_measure_quantity',
-            },
-            {
                 title: '用料数量(计数单位)',
                 width: 100,
                 render: (text, record) => (
@@ -225,6 +237,7 @@ class index extends Component {
             },
             {
                 title: '用料数量(计量单位)',
+                width: 100,
                 render: (text, record) => (
                     <div>
                         <span>{record.usage_measure_quantity}{record.measurement_unit}</span>
@@ -234,6 +247,7 @@ class index extends Component {
 
             {
                 title: '单位成本(元/计量单位)',
+                width: 115,
                 render: (text, record) => (
                     <div>
                         <span>{record.unit_measure_cost}(元/{record.measurement_unit})</span>
@@ -242,8 +256,12 @@ class index extends Component {
             },
             {
                 title: '主材成本(元)',
-                dataIndex: 'measure_cost',
-                width: 100,
+                render: (text, record) => (
+                    <div>
+                        <span>{record.measure_cost}元</span>
+                    </div>
+                ),
+                width: 80,
             },
             {
                 title: '操作',
@@ -271,7 +289,7 @@ class index extends Component {
                 title: '工件版式',
                 render: (text, record) => (
                     <div>
-                        <span>{record.component_name}（{record.format_name}）</span>
+                        <span>{record.component_name}({record.format_name})</span>
                     </div>
                 ),
 
@@ -282,12 +300,25 @@ class index extends Component {
             },
             {
                 title: '辅料/模具名称',
-                width: 130,
+                width: 95,
                 dataIndex: 'name',
             },
             {
                 title: '说明',
                 dataIndex: 'remark',
+            },
+            {
+                title: '特性',
+                width: 150,
+                render: (text, record) => (
+                    <div>
+                        <span>{record.class_manage_name}</span>
+                        {record.feature_value &&
+                            <span> 【{record.feature_value}】</span>
+                        }
+                    </div>
+                ),
+
             },
             {
                 title: '物料编号',
@@ -300,6 +331,11 @@ class index extends Component {
                 dataIndex: 'counting_unit',
             },
             {
+                title: '计量单位',
+                width: 90,
+                dataIndex: 'measurement_unit',
+            },
+            {
                 title: '用量',
                 dataIndex: 'usage_measure_quantity',
             },
@@ -310,6 +346,7 @@ class index extends Component {
             },
             {
                 title: '辅料/模具成本(元)',
+                width: 95,
                 dataIndex: 'measure_cost',
             },
             {
@@ -384,6 +421,7 @@ class index extends Component {
         isVisibleIngredientsMaterial: false,
         isVisibleAccessoriesCost: false,
         isVisibleArtificialCost: false,
+        visibleBack: false,
         showIngredientsMaterial: {},
         columnsTechList: [
             {
@@ -428,7 +466,7 @@ class index extends Component {
                     <div>
                         {record.supplementary_list.length != 0 &&
                             record.supplementary_list.map((e, index) => (
-                                <div key={index}>{e.comsumable_name}</div>
+                                <div key={index}>{e.name}</div>
                             ))
                         }
                     </div >
@@ -441,18 +479,6 @@ class index extends Component {
                         {record.supplementary_list.length != 0 &&
                             record.supplementary_list.map((e, index) => (
                                 <div key={index}>{e.area_value}</div>
-                            ))
-                        }
-                    </div >
-                ),
-            },
-            {
-                title: '固定损',
-                render: (text, record) => (
-                    <div>
-                        {record.supplementary_list.length != 0 &&
-                            record.supplementary_list.map((e, index) => (
-                                <div key={index}>{e.static_loss}</div>
                             ))
                         }
                     </div >
@@ -474,7 +500,6 @@ class index extends Component {
             },
         ],
         techList: [],
-
         showAccessoriesList: [],
         showListData: {
             ingredient_list: [],
@@ -482,10 +507,12 @@ class index extends Component {
             unit_format_quantity: '',
             key: '',
             usage_measure_quantity: '',
+            unit_measure_cost: '',
         },
         isShowUsageCountingQuantity: 1,
         isShowTheoryMeasureQuantity: 1,
         isShowLossQuantity: 1,
+        isUnitMeasureCost: 1,
         isshowComponent: false,
         showMouldList: [],
         keyId: '',
@@ -495,7 +522,9 @@ class index extends Component {
         isStandardPrepareTime: 1,
         // 准备时长
         isStandardEfficiency: 1,
-        // 效能
+        description: '',
+        // 委外
+        techOutsourcingList: [],
     }
     componentDidMount() {
         let id = common.common.getQueryVariable('id')
@@ -518,20 +547,17 @@ class index extends Component {
                 let listData = []
                 let proData = []
                 let data = res.data
+                let proBomData = data.product
                 if (data.valid_period_day == 0) {
                     data.valid_period_day = 7
                 }
-
                 let bomId = res.data.pods_bom_id
                 let status = res.data.status
                 // 是否禁用费率输入框
-
                 listData.push(data)
                 proData.push(data.product)
-
                 let detail = res.data.details
                 let source_attribute = data.product.source_attribute
-
                 detail.forEach(e => {
                     e.source_attribute = data.product.source_attribute
                     e.totalCost = 1
@@ -544,17 +570,13 @@ class index extends Component {
                 optionData.forEach(j => {
                     j.name = '询价数量：' + j.quantity + j.unit
                 });
-                let proName = data.product.name
                 if (optionData.length != 0) {
                     let temQuantity = optionData[0].quantity
                     this.getListData(id, bomId, temQuantity, status)
                 }
                 if (data.product.source_attribute != 3) {
-                    this.bom(bomId, proName)
+                    this.bom(bomId, proBomData)
                 }
-                console.log('detail: ', detail);
-                // TODO 确认BOM树的出现条件
-
                 this.setState(
                     {
                         listData: listData,
@@ -573,8 +595,8 @@ class index extends Component {
         })
     }
 
-    // 根据id获取信息
-    getListData(pid, bid, num, status) {
+    // 根据id获取信
+    getListData(pid, bid, num) {
         http.get(api.checkCost, {
             params: {
                 pods_bom_id: bid,
@@ -586,7 +608,10 @@ class index extends Component {
             let supplementary = res.data.supplementary_and_mold_list
             let techList = res.data.tech_list
             let deliveryInfo = res.data.delivery_list
-            console.log('deliveryInfo: ', deliveryInfo);
+            let techOutsourcingList = res.data.tech_outsourcing_list
+            techOutsourcingList.forEach(i => {
+                i.unitMeasureCost = 1
+            })
             // 运费
             deliveryInfo.forEach(e => {
                 e.isShowUnitVolume = 1
@@ -600,6 +625,7 @@ class index extends Component {
                     accessoriesList: supplementary,
                     artificialList: techList,
                     freightList: deliveryInfo,
+                    techOutsourcingList
                 }
             )
         })
@@ -615,201 +641,368 @@ class index extends Component {
         })
         this.getListData(pageId, pods_bom_id, num, status)
     }
+
     changeDay = (e) => {
         const { showData } = this.state
         showData.valid_period_day = e.target.value
         this.setState({ showData })
     }
 
-    bom(id, proName) {
+    bom(id, proData) {
         http.get(import.meta.env.VITE_APP_PODS_HOST + '/bom/get', {
             params: {
                 id: id
             }
         }).then(res => {
             if (res.data.status == 1) {
+                let resData = res.data.data
+                let resultMap = this.initData(resData, proData);
 
-                let resData = res.data.data.engineering_data
-                let component_list = [];
+                let data = [{
+                    name: proData.name || '产品名称',
+                    component_list: resultMap.component_list,
+                    pre_component_list: resultMap.pre_component_list,
+                    combination_list: resultMap.combination_list,
+                    product_list: resultMap.product_list,
+                    packing_list: resultMap.packing_list
+                }];
+                this.setState({ list: data })
+            }
+        })
+    }
 
-                resData.component_list.forEach(component => {
+    initData(BOM, operate = false, proData) {
 
-                    let material_list = [];
-                    component.material_list.forEach(material => {
-                        material_list.push({
-                            id: material.id,
-                            name: material.name
-                        });
-                    });
+        let res = BOM.engineering_data;
 
-                    let tech_list = [];
-                    component.tech_list.forEach(tech => {
+        let componentIds = []; // 被预组件或组件使用的子件
+        let pre_component_list = [];
+        res.pre_component_list.forEach(pre => {
 
-                        let techInfo = this.getTech(tech);
-
-                        tech_list.push({
-                            id: tech.id,
-                            sort: tech.sort,
-                            name: tech.settings_tech_options_name,
-                            comsumable_list: techInfo.comsumable_list,
-                            mould_list: techInfo.mould_list,
-                            options: techInfo.options
-                        });
-                    });
-
-                    component_list.push({
-                        ...component,
-                        material_list: material_list,
-                        tech_list: tech_list.sort(this.compare)
-                    });
+            if (pre.puzzle_plan == 1) {
+                componentIds = componentIds.concat(common.getAsStringToArray.toArray(pre.contain_component_ids, '_'));
+            } else {
+                pre.group_list.forEach(group => {
+                    componentIds = componentIds.concat(common.getAsStringToArray.toArray(group.contain_component_ids, '_'));
                 });
+            }
 
-                let pre_component_list = [];
-                resData.pre_component_list.forEach(pre => {
+            let tech_list = [];
+            pre.tech_list.forEach(tech => {
 
-                    let tech_list = [];
-                    pre.tech_list.forEach(tech => {
+                tech.artifact_name = pre.name;
+                let techInfo = this.getTech(tech);
 
-                        let techInfo = this.getTech(tech);
-
-                        tech_list.push({
-                            id: tech.id,
-                            sort: tech.sort,
-                            name: tech.settings_tech_options_name,
-                            comsumable_list: techInfo.comsumable_list,
-                            mould_list: techInfo.mould_list,
-                            options: techInfo.options
-                        });
-                    });
-
-                    pre_component_list.push({
-                        ...pre,
-                        id: pre.id,
-                        name: pre.name,
-                        tech_list: tech_list.sort(this.compare)
-                    });
+                tech_list.push({
+                    id: tech.id,
+                    sort: tech.sort,
+                    operate: operate,
+                    name: tech.settings_tech_options_name,
+                    comsumable_list: techInfo.comsumable_list,
+                    mould_list: techInfo.mould_list,
+                    options: techInfo.options,
+                    result: common.clone.deepClone(tech)
                 });
+            });
 
-                let combination_list = [];
-                resData.combination_list.forEach(combination => {
+            let categoryAndMaterial = this.getCategoryAndMaterial(pre.material_list, operate, 'pre');
 
-                    // 子件
-                    combination.component_ids = combination.component_ids == '' ? [] : combination.component_ids.split('_');
-                    // 组件
-                    combination.component_combination_ids = combination.component_combination_ids == '' ? [] : combination.component_combination_ids.split('_');
+            pre_component_list.push({
+                ...pre,
+                id: pre.id,
+                name: pre.name,
+                operate: operate,
+                category_list: categoryAndMaterial.category_list,
+                material_list: categoryAndMaterial.material_list,
+                group_list: pre.group_list || [],
+                tech_list: tech_list.sort(this.compare)
+            });
+        });
 
-                    let tech_list = [];
-                    combination.tech_list.forEach(tech => {
+        let combination_list = [];
+        res.combination_list.forEach(combination => {
 
-                        let techInfo = this.getTech(tech);
+            // 子件
+            combination.component_ids = common.getAsStringToArray.toArray(combination.component_ids, '_');
+            // 组件
+            combination.component_combination_ids = common.getAsStringToArray.toArray(combination.component_combination_ids, '_');
 
-                        tech_list.push({
-                            id: tech.id,
-                            sort: tech.sort,
-                            name: tech.settings_tech_options_name,
-                            comsumable_list: techInfo.comsumable_list,
-                            mould_list: techInfo.mould_list,
-                            options: techInfo.options
-                        });
-                    });
+            let tech_list = [];
+            combination.tech_list.forEach(tech => {
 
-                    combination_list.push({
-                        ...combination,
-                        id: combination.id,
-                        name: combination.name,
-                        tech_list: tech_list.sort(this.compare)
-                    });
+                tech.artifact_name = combination.name;
+                let techInfo = this.getTech(tech);
+
+                tech_list.push({
+                    id: tech.id,
+                    sort: tech.sort,
+                    operate: operate,
+                    name: tech.settings_tech_options_name,
+                    comsumable_list: techInfo.comsumable_list,
+                    mould_list: techInfo.mould_list,
+                    options: techInfo.options,
+                    result: common.clone.deepClone(tech)
                 });
+            });
 
-                let u_tech_list = [];
-                let p_tech_list = [];
-                let product_tech_list = [];
-                resData.product_tech_list.forEach(tech => {
+            let categoryAndMaterial = this.getCategoryAndMaterial(combination.material_list, operate, 'combination');
 
-                    let techInfo = this.getTech(tech);
+            combination_list.push({
+                ...combination,
+                operate: operate,
+                id: combination.id,
+                name: combination.name,
+                category_list: categoryAndMaterial.category_list,
+                material_list: categoryAndMaterial.material_list,
+                tech_list: tech_list.sort(this.compare),
+            });
+        });
 
-                    if (tech.type == 0) {
-                        product_tech_list.push({
-                            id: tech.id,
-                            name: tech.settings_tech_options_name,
-                            comsumable_list: techInfo.comsumable_list,
-                            mould_list: techInfo.mould_list,
-                            options: techInfo.options
-                        });
-                    } else if (tech.type == 1) {
-                        u_tech_list.push({
-                            id: tech.id,
-                            name: tech.settings_tech_options_name,
-                            comsumable_list: techInfo.comsumable_list,
-                            mould_list: techInfo.mould_list,
-                            options: techInfo.options
-                        });
-                    } else if (tech.type == 2) {
-                        p_tech_list.push({
-                            id: tech.id,
-                            name: tech.settings_tech_options_name,
-                            comsumable_list: techInfo.comsumable_list,
-                            mould_list: techInfo.mould_list,
-                            options: techInfo.options
-                        });
+        let component_list = [];
+        res.component_list.forEach(component => {
+
+            let tech_list = [];
+            component.tech_list.forEach(tech => {
+
+                tech.artifact_name = component.name;
+                let techInfo = this.getTech(tech);
+
+                tech_list.push({
+                    id: tech.id,
+                    sort: tech.sort,
+                    operate: operate,
+                    name: tech.settings_tech_options_name,
+                    comsumable_list: techInfo.comsumable_list,
+                    mould_list: techInfo.mould_list,
+                    options: techInfo.options,
+                    result: common.clone.deepClone(tech)
+                });
+            });
+
+            let categoryAndMaterial = this.getCategoryAndMaterial(component.material_list, operate, 'component');
+
+            component.disabled = componentIds.includes(component.id);
+
+            component_list.push({
+                ...component,
+                operate: operate,
+                category_list: categoryAndMaterial.category_list,
+                material_list: categoryAndMaterial.material_list,
+                tech_list: tech_list.sort(this.compare)
+            });
+        });
+
+        let u_tech_list = [];
+        let product_tech_list = [];
+        res.product_tech_list.forEach(tech => {
+
+            tech.artifact_name = '';
+            let techInfo = this.getTech(tech);
+
+            if (tech.type == 0) {
+                product_tech_list.push({
+                    id: tech.id,
+                    operate: operate,
+                    name: tech.settings_tech_options_name,
+                    comsumable_list: techInfo.comsumable_list,
+                    mould_list: techInfo.mould_list,
+                    options: techInfo.options,
+                    result: common.clone.deepClone(tech)
+                });
+            } else if (tech.type == 1) {
+                u_tech_list.push({
+                    id: tech.id,
+                    operate: operate,
+                    name: tech.settings_tech_options_name,
+                    comsumable_list: techInfo.comsumable_list,
+                    mould_list: techInfo.mould_list,
+                    options: techInfo.options,
+                    result: common.clone.deepClone(tech)
+                });
+            }
+        });
+
+        let uom_unit_list = [];
+        if (res.sku_unit !== '') {
+            let name = res.sku_unit + '(' + res.sku_capacity + ')';
+            uom_unit_list.push({
+                name: name,
+                tech_list: u_tech_list
+            });
+        }
+
+        let packing_unit_list = [];
+        res.packaging_list.forEach((packaging, p) => {
+
+            let techList = []
+            if (packaging.packaging_tech != null && packaging.packaging_tech.settings_tech_options_id != 0 && typeof packaging.packaging_tech.settings_tech_options_id !== 'undefined') {
+                let techInfo = packaging.packaging_tech;
+                techList = [
+                    {
+                        id: techInfo.id,
+                        operate: operate,
+                        name: techInfo.settings_tech_options_name,
+                        comsumable_list: techInfo.comsumable_list,
+                        mould_list: techInfo.mould_list,
+                        options: techInfo.options,
+                        result: deepClone(techInfo)
                     }
+                ]
+            }
+
+            let unit;
+            if (!p) {
+                unit = this.$root.unit;
+            } else {
+                unit = res.packaging_list[p - 1]['unit'];
+            }
+
+            let name = packaging.unit;
+            if (packaging.capacity_type == 1) {
+                name = packaging.capacity + unit + '/' + packaging.unit;
+            }
+
+            packing_unit_list.push(
+                {
+                    name: name,
+                    id: packaging.id,
+                    unit: packaging.unit,
+                    capacity_type: packaging.capacity_type,
+                    capacity: packaging.capacity,
+                    tech_list: techList,
+                    packaging_tech: packaging.packaging_tech
+                }
+            );
+        });
+
+        let categoryAndMaterial = this.getCategoryAndMaterial(res.material_list, operate, 'product');
+
+        let product_list = [
+            {
+                name: '产品工序',
+                operate: false,
+                category_list: categoryAndMaterial.category_list,
+                material_list: categoryAndMaterial.material_list,
+                product_tech_list: product_tech_list,
+                uom_unit_list: uom_unit_list
+            }
+        ];
+
+        let packing_list = [
+            {
+                name: '产品包装',
+                operate: false,
+                packing_unit_list: packing_unit_list
+            }
+        ];
+
+        this.revision_note = BOM.revision_note;
+        this.version_instructions = BOM.version_instructions;
+        this.componentType = BOM.engineering_data.component_type;
+
+        return {
+            component_list: component_list,
+            pre_component_list: pre_component_list,
+            combination_list: combination_list,
+            product_list: product_list,
+            packing_list: packing_list
+        }
+    }
+
+    getTech(tech) {
+
+        let resultMap = {};
+
+        let comsumable_list = [];
+        tech.comsumable_list.forEach(comsumable => {
+            comsumable_list.push({
+                id: comsumable.id,
+                comsumable_name: comsumable.comsumable_name,
+                quantity: comsumable.quantity
+            });
+        });
+        resultMap.comsumable_list = comsumable_list;
+
+        let mould_list = [];
+        mould_list = tech.mould_list.filter(mould => {
+            mould.mould_name = mould.settings_tech_mould_name;
+            return true;
+        });
+
+        resultMap.mould_list = mould_list;
+
+        let options = [];
+        tech.options.forEach(option => {
+            options.push({
+                id: option.id,
+                option_name: option.options_name
+            });
+        });
+        resultMap.options = options;
+
+        if (tech.processing_way == 2) {
+            let techName = tech.settings_tech_options_name;
+            tech.tech_name = techName;
+            tech.settings_tech_options_name = techName + '(' + { 1: '简单', 2: '复杂' }[tech.complexity] + ')';
+            tech.settings_tech_options_name_work = techName + '(' + { 1: '简单', 2: '复杂' }[tech.complexity] + '-' + tech.artifact_name + ')';
+        }
+
+        return resultMap;
+    }
+
+
+
+    getCategoryAndMaterial(materialList, operate, key) {
+        let category_list = [];
+        let material_list = [];
+        materialList.forEach(material => {
+            if (material.type == 1) {
+                // 物料
+                material_list.push({
+                    ...material,
+                    key: key,
+                    operate: operate,
+                    name: material.name,
+                    del_id: material.id,
+                    id: material.settings_material_id
                 });
+            } else if (material.type == 3) {
+                material.key = key;
+                material.del_id = material.id;
 
-                let uom_unit_list = [];
-                if (resData.sku_unit !== '') {
-                    let name = resData.sku_unit + '(' + resData.sku_capacity + ')';
-                    uom_unit_list.push({
-                        name: name,
-                        tech_list: u_tech_list
-                    });
-                }
-
-                let packing_unit_list = [];
-                if (resData.outer_packaging_sku_unit !== '') {
-
-                    let sku_capacity = '';
-                    if (resData.outer_packaging_capacity_type == 1) {
-                        sku_capacity = resData.outer_packaging_sku_capacity;
-                    }
-                    let name = resData.outer_packaging_sku_unit + '(' + sku_capacity + ')';
-
-                    packing_unit_list.push({
-                        name: name,
-                        sku_unit: resData.outer_packaging_sku_unit,
-                        sku_capacity: sku_capacity,
-                        tech_list: p_tech_list
-                    });
-                }
-
-                let product_list = [];
-                if (product_tech_list.length || uom_unit_list.length) {
-                    product_list = [
+                let mList = [];
+                if (material.material_sku_number != '' && material.material_sku_number != 0) {
+                    mList = [
                         {
-                            name: '产品工序',
-                            product_tech_list: product_tech_list,
-                            uom_unit_list: uom_unit_list,
-                            packing_unit_list: packing_unit_list
+                            ...material,
+                            key: key,
+                            operate: operate,
+                            name: material.name,
+                            del_id: material.id,
+                            id: material.settings_material_id
                         }
                     ];
                 }
 
-                let data = [{
-                    id: resData.id,
-                    name: proName || '产品名称',
-                    component_list: component_list,
-                    pre_component_list: pre_component_list,
-                    combination_list: combination_list,
-                    product_list: product_list
-                }];
-
-                this.setState({ list: data })
-
-            } else {
-                message.warning(res.data.msg)
-
+                category_list.push({
+                    key: key,
+                    id: material.class_manage_id,
+                    name: material.class_manage_name,
+                    del_id: material.id,
+                    group_id: material.feature_value_group_id,
+                    operate: operate,
+                    material: material,
+                    material_list: mList
+                });
             }
-        })
+        });
+
+        return {
+            category_list: category_list,
+            material_list: material_list
+        }
     }
+
     compare(a, b) {
         return a.sort - b.sort;
     }
@@ -849,10 +1042,8 @@ class index extends Component {
 
     tree = (event) => {
         let $parentLi = $(event.target).closest('li.parent_li');
-
         let $li = $parentLi.find('ul > li');
         this.visible($li, 'fast');
-
         let $operate = $parentLi.find(' > .operate');
         this.visible($operate);
     }
@@ -874,10 +1065,6 @@ class index extends Component {
         }).then(res => {
             if (res.code == 1) {
                 let data = res.data
-                if (data.ingredient_list && data.ingredient_list[0].filter_condition_list.length != 0) {
-                    data.filterName = data.ingredient_list[0].filter_condition_list[0].name + '(' + data.ingredient_list[0].filter_condition_list[0].value + ')'
-                }
-
                 if (data.calculate_process_list) {
                     data.calculate_process_list.forEach(e => {
                         e.preKey = data.key
@@ -885,9 +1072,9 @@ class index extends Component {
                 }
                 let dataList = []
                 // 子件工艺 为拼版  大于1
-                if ((data.component_quantity > 1 && data.imposition_settings == 1) && (data.component_type == 1 || data.component_type == 2)) {
+                if ((data.component_quantity > 1 && data.imposition_settings == 1) && (data.type == 4 || data.type == 3)) {
                     data.flag = 1
-                } else if (data.type == 3 || data.type == 4) {
+                } else if (data.type == 4 || data.type == 3) {
                     data.flag = 3
                 } else if (data.type == 0 || data.type == 5) {
                     data.flag = 4
@@ -901,9 +1088,11 @@ class index extends Component {
                     e.isShowformatQuantity = 1
                     e.isUnitFormatQuantity = 1
                     e.isShowTotalRate = 1
+                    e.isShowExcipientsTheoryMeasureQuantity = 1
+                    e.isShowCountingQuantity = 1
+                    e.isUnitMeasureCost = 1
                 })
 
-                console.log('dataList: ', dataList);
                 this.setState({
                     showListData: data,
                     showAccessoriesList: dataList,
@@ -945,7 +1134,7 @@ class index extends Component {
         })
     }
 
-    // 制造人工成本 
+    // 制造人工成本
     artificialCost = (data) => {
         this.getEncapsulatio(data.key)
         this.setState({
@@ -998,8 +1187,8 @@ class index extends Component {
         dataMap[keyName] = showListData[keyName]
 
         // 这里let dataMap是个对象  dataMap[keyName]是dataMap.a=showListData.b
-        // if keyName = a 
-        //那么 就是这样执行的  
+        // if keyName = a
+        //那么 就是这样执行的
         // dataMap:{
         // a:a
         // }
@@ -1041,10 +1230,11 @@ class index extends Component {
 
     // 主料是否显示
     changeIsShowUsageCountingQuantity = (key) => {
-        const { isShowUsageCountingQuantity, isShowTheoryMeasureQuantity, isShowLossQuantity } = this.state
+        const { isShowUsageCountingQuantity, isShowTheoryMeasureQuantity, isShowLossQuantity, isUnitMeasureCost } = this.state
         let usage_measure_quantity_num = isShowUsageCountingQuantity
         let theory_measure_quantity_num = isShowTheoryMeasureQuantity
         let loss_quantity_num = isShowLossQuantity
+        let unit_measure_cost_num = isUnitMeasureCost
 
         if (key == 'usage_measure_quantity') {
             if (usage_measure_quantity_num == 1) {
@@ -1054,7 +1244,7 @@ class index extends Component {
                 this.saveTitle(key)
             }
         }
-        if (key == 'theory_measure_quantity_num') {
+        if (key == 'theory_measure_quantity') {
             if (theory_measure_quantity_num == 1) {
                 theory_measure_quantity_num = 2
             } else {
@@ -1063,7 +1253,7 @@ class index extends Component {
             }
         }
 
-        if (key == 'theory_measure_quantity_num') {
+        if (key == 'loss_quantity') {
             if (loss_quantity_num == 1) {
                 loss_quantity_num = 2
             } else {
@@ -1071,11 +1261,22 @@ class index extends Component {
                 this.saveTitle(key)
             }
         }
+
+
+        if (key == 'unit_measure_cost') {
+            if (unit_measure_cost_num == 1) {
+                unit_measure_cost_num = 2
+            } else {
+                unit_measure_cost_num = 1
+                this.saveTitle(key)
+            }
+        }
+
         this.setState({
             isShowUsageCountingQuantity: usage_measure_quantity_num,
             isShowTheoryMeasureQuantity: theory_measure_quantity_num,
-            isShowLossQuantity: loss_quantity_num
-
+            isShowLossQuantity: loss_quantity_num,
+            isUnitMeasureCost: unit_measure_cost_num
         })
     }
 
@@ -1123,50 +1324,87 @@ class index extends Component {
             showListData: data
         })
     }
+
     // 编辑辅料
-    editUsageMeasureQuantity = (data, type) => {
+    editReservedQuantity = (key, type, index) => {
         const { showAccessoriesList } = this.state
-        if (data.isShowUsageMeasureQuantity == 1) {
-            data.isShowUsageMeasureQuantity = 2
-        } else {
-            data.isShowUsageMeasureQuantity = 1
-            this.saveUsageMeasureQuantityInput(data, type)
+        let num_theory_measure_quantity = showAccessoriesList[index].isShowExcipientsTheoryMeasureQuantity
+        let num_loss_quantity = showAccessoriesList[index].isShowReservedQuantity
+        let num_usage_measure_quantity = showAccessoriesList[index].isShowUsageMeasureQuantity
+        let num_usage_counting_quantity = showAccessoriesList[index].isShowCountingQuantity
+        let num_unit_measure_cost = showAccessoriesList[index].isUnitMeasureCost
+
+
+        if (key == 'theory_measure_quantity') {
+            if (num_theory_measure_quantity == 1) {
+                num_theory_measure_quantity = 2
+            } else {
+                num_theory_measure_quantity = 1
+                this.saveUsageMeasureQuantityInput(key, type, index)
+            }
         }
-        this.setState({ showAccessoriesList })
-    }
-    changeUsageMeasureQuantityInput = (e, data) => {
-        const { showAccessoriesList } = this.state
-        data.usage_measure_quantity = e.target.value
-        this.setState({ showAccessoriesList })
-    }
-    // 辅料放数
-    editReservedQuantity = (data, type) => {
-        const { showAccessoriesList } = this.state
-        if (data.isShowReservedQuantity == 1) {
-            data.isShowReservedQuantity = 2
-        } else {
-            data.isShowReservedQuantity = 1
-            this.saveUsageMeasureQuantityInput(data, type)
+
+        if (key == 'loss_quantity') {
+            if (num_loss_quantity == 1) {
+                num_loss_quantity = 2
+            } else {
+                num_loss_quantity = 1
+                this.saveUsageMeasureQuantityInput(key, type, index)
+            }
         }
+
+
+        if (key == 'usage_measure_quantity') {
+            if (num_usage_measure_quantity == 1) {
+                num_usage_measure_quantity = 2
+            } else {
+                num_usage_measure_quantity = 1
+                this.saveUsageMeasureQuantityInput(key, type, index)
+            }
+        }
+
+
+        if (key == 'usage_counting_quantity') {
+            if (num_usage_counting_quantity == 1) {
+                num_usage_counting_quantity = 2
+            } else {
+                num_usage_counting_quantity = 1
+                this.saveUsageMeasureQuantityInput(key, type, index)
+            }
+        }
+
+        if (key == 'unit_measure_cost') {
+            if (num_unit_measure_cost == 1) {
+                num_unit_measure_cost = 2
+            } else {
+                num_unit_measure_cost = 1
+                this.saveUsageMeasureQuantityInput(key, type, index)
+            }
+        }
+
+        showAccessoriesList[index].isShowExcipientsTheoryMeasureQuantity = num_theory_measure_quantity
+        showAccessoriesList[index].isShowReservedQuantity = num_loss_quantity
+        showAccessoriesList[index].isShowUsageMeasureQuantity = num_usage_measure_quantity
+        showAccessoriesList[index].isShowCountingQuantity = num_usage_counting_quantity
+        showAccessoriesList[index].isUnitMeasureCost = num_unit_measure_cost
+
         this.setState({ showAccessoriesList })
     }
 
-    editReservedQuantityInput = (e, data) => {
+    editReservedQuantityInput = (e, index) => {
         const { showAccessoriesList } = this.state
-        data.loss_quantity = e.target.value
+        showAccessoriesList[index][e.target.name] = e.target.value
         this.setState({ showAccessoriesList })
     }
 
-    saveUsageMeasureQuantityInput = (data, type) => {
-        const { pageId, keyId } = this.state
+    saveUsageMeasureQuantityInput = (key, type, index) => {
+        const { pageId, keyId, showAccessoriesList } = this.state
+        let data = {}
+        data[key] = showAccessoriesList[index][key]
         let params = {
             id: keyId,
             type: type,
-            data: {
-                usage_measure_quantity: Number(data.usage_measure_quantity),
-                loss_quantity: Number(data.loss_quantity)
-            }
-
+            data: data
         }
         http.post(api.bomCostDetail, params).then(res => {
             if (res.code == 1) {
@@ -1231,7 +1469,7 @@ class index extends Component {
         })
     }
     commitIt = () => {
-        const { pageId, showData, nuclearPricelist } = this.state
+        const { pageId, showData, nuclearPricelist, source_attribute } = this.state
         let that = this
         const { confirm } = Modal;
         let params = {
@@ -1239,7 +1477,11 @@ class index extends Component {
             valid_period_day: Number(showData.valid_period_day),
             details: []
         }
+        let flag = false
         nuclearPricelist.forEach(i => {
+            if (!i.price_info.is_check_price && source_attribute != 1) {
+                flag = true
+            }
             params.details.push(
                 {
                     id: i.id,
@@ -1250,8 +1492,13 @@ class index extends Component {
                 }
             )
         })
+
+        if (flag) {
+            message.warning('当前物料尚未进行采购核价，核价完成后再进行操作！')
+            return
+        }
         confirm({
-            title: '您确定要提交当前核价单么？提交之后当前核价单状态将变为【已核价】。',
+            title: '您确定要提交当前核价单么？提交之后当前核价单状态将变为【已核价】',
             okText: '确定',
             cancelText: '取消',
             onOk() {
@@ -1263,9 +1510,9 @@ class index extends Component {
                         setTimeout(function () {
                             common.pathData.getPathData(
                                 {
-                                    path: '/Quotation',
+                                    path: '/productPrice',
                                     data: {
-                                        type: 2,
+                                        type: 1,
                                     },
                                     history: history
                                 }
@@ -1326,14 +1573,12 @@ class index extends Component {
         freightList[index].isWeightCostRate = weight_cost_rate_num
         this.setState({ freightList })
     }
-
     // 运费改变输入框
     changeUnitVolumeInput = (e, index) => {
         const { freightList } = this.state
         freightList[index][e.target.name] = e.target.value
         this.setState({ freightList })
     }
-
     // 保存运费
     saveFreight = (dataNum, keyName) => {
         const { pageId } = this.state
@@ -1354,7 +1599,6 @@ class index extends Component {
             }
         })
     }
-
     changeArtificialInput = (index, key) => {
         const { showAccessoriesList } = this.state
         let format_quantity_num = showAccessoriesList[index].isShowformatQuantity
@@ -1387,9 +1631,6 @@ class index extends Component {
                 this.saveChangeIsShowTotalRate(key)
             }
         }
-
-
-
         showAccessoriesList[index].isShowformatQuantity = format_quantity_num
         showAccessoriesList[index].isUnitFormatQuantity = unit_format_quantity_num
         showAccessoriesList[index].isShowTotalRate = total_rate_num
@@ -1398,18 +1639,101 @@ class index extends Component {
         this.setState({ showAccessoriesList })
 
     }
+    backBOM = () => {
+        this.setState({ visibleBack: true })
+    }
+    onChangeDescription = (e) => {
+        this.setState({ description: e.target.value })
+    }
+    // 退回
+    handleOkBack = () => {
+        const { description, showData } = this.state
+        let params = {
+            id: showData.id,
+            stage: 1,
+            description: description
+        }
 
+        if (params.description == "") {
+            message.warning('请输入退回原因')
+            return
+        }
+        let history = this.props.history
+        http.post('/check/order/return', params).then(res => {
+            if (res.code == 1) {
+                message.success('退回成功')
+                this.setState({ visibleBack: false })
+                setTimeout(() => {
+                    common.pathData.getPathData(
+                        {
+                            path: '/productPrice',
+                            data: {
+                                type: 2
+                            },
+                            history: history
+                        }
+                    )
+                }, 500)
+            } else {
+                message.warning(res.message)
+            }
+
+        })
+
+    }
+    handleCancelBack = () => {
+        this.setState({ visibleBack: false })
+    }
+
+    // 改变委外
+    onChangeTotalRate = (record) => {
+        const { techOutsourcingList } = this.state
+        if (record.unitMeasureCost == 1) {
+            record.unitMeasureCost = 2
+        } else {
+            record.unitMeasureCost = 1
+            this.saveOutsource(record)
+        }
+        this.setState({ techOutsourcingList })
+    }
+
+    changeUnitMeasureCost = (e, index) => {
+        const { techOutsourcingList } = this.state
+        techOutsourcingList[index].unit_measure_cost = e.target.value
+        this.setState({ techOutsourcingList })
+    }
+
+    saveOutsource(data) {
+        const { pageId } = this.state
+        let params = {
+            id: data.key,
+            type: 6,
+            data: {
+                unit_measure_cost: Number(data.unit_measure_cost)
+            }
+        }
+        http.post(api.bomCostDetail, params).then(res => {
+            if (res.code == 1) {
+                message.success('设置成功')
+                this.getEncapsulatio(data.key)
+                this.getData(pageId)
+            } else {
+                message.warning(res.message)
+            }
+        })
+
+    }
 
     render() {
         const {
-            option, size, showData, columns, listData, columnsMaterial, materialList, columnsAccessories, accessoriesList,
+            option, showData, columns, listData, columnsMaterial, materialList, columnsAccessories, accessoriesList,
             columnsArtificial, artificialList, freightList, nuclearPricelist, columnsPro, listPro, list,
             isVisibleIngredientsMaterial, isVisibleAccessoriesCost, isVisibleArtificialCost, showAccessoriesList,
-            showListData, columnsTechList, isShowUsageCountingQuantity, status,
-            isShowTheoryMeasureQuantity, isShowLossQuantity, source_attribute, isStandardPrepareTime, isStandardEfficiency
+            showListData, columnsTechList, isShowUsageCountingQuantity, status, visibleBack, description, techOutsourcingList,
+            isShowTheoryMeasureQuantity, isShowLossQuantity, source_attribute, isStandardPrepareTime, isStandardEfficiency, isUnitMeasureCost
         } = this.state
         const { TabPane } = Tabs;
-
+        const { TextArea } = Input;
 
         let flagIsShowCommit = 1
         let rateInput = true
@@ -1422,15 +1746,16 @@ class index extends Component {
             {
                 title: '运程',
                 dataIndex: 'name',
+
+                width: 90
             },
             {
                 title: '每包装单位体积(立方米/包装单位)',
+                width: 150,
                 render: (text, record, index) => {
                     let unitData
                     let show
-                    console.log('record.pack_unit_list: ', record);
                     if (record.pack_unit_list) {
-                        console.log('11111')    
                         unitData = <>
                             {
                                 record.pack_unit_list.map(e => (
@@ -1443,7 +1768,7 @@ class index extends Component {
                     }
 
 
-                    if (status == 5 || status == 6 && source_attribute != 1) {
+                    if (status == 5 || status == 6) {
                         show = <span>
                             {record.isShowUnitVolume == 1 &&
                                 <>
@@ -1484,7 +1809,7 @@ class index extends Component {
                             }
                         </>
                     }
-                    if (status == 5 || status == 6 && source_attribute != 1) {
+                    if (status == 5 || status == 6) {
                         show = <span>
                             {record.isShowUnitWeight == 1 &&
                                 <>
@@ -1593,14 +1918,20 @@ class index extends Component {
                 dataIndex: 'weight_cost',
             }
         ]
+
+
         // 底部核价
         const columnsNuclearPrice = [
             {
                 title: '询价数量',
-                dataIndex: 'quantity',
+                render: (text, record) => (
+                    <div>
+                        <span>{record.quantity}{record.unit}</span>
+                    </div>
+                ),
             },
             {
-                title: '总计成本',
+                title: '总计成本(元)',
                 render: (text, record, index) => {
                     let show
                     if ((status == 5 || status == 6) && record.source_attribute == 1) {
@@ -1630,7 +1961,11 @@ class index extends Component {
             },
             {
                 title: '单位成本(元/计数单位)',
-                dataIndex: 'unit_cost',
+                render: (text, record) => (
+                    <div>
+                        <span>{record.unit_cost}(元/{record.unit})</span>
+                    </div>
+                ),
             },
 
             {
@@ -1639,9 +1974,21 @@ class index extends Component {
             },
             {
                 title: '含税单价(元/计数单位)',
-                dataIndex: 'unit_quote',
+                render: (text, record) => (
+                    <div>
+                        <span>{record.unit_quote}(元/{record.unit})</span>
+                    </div>
+                ),
             }
         ]
+
+        if (source_attribute != 1) {
+            columnsNuclearPrice.splice(1, 0, {
+                title: '外购成本',
+                dataIndex: 'total_cost',
+            })
+        }
+
         // 主料第二个表格
         const columnsCalculateProcessList = [
             {
@@ -1725,34 +2072,83 @@ class index extends Component {
             },
             {
                 title: '物料规格',
-                dataIndex: 'specifications',
+                dataIndex: 'specification',
+            },
+            {
+                title: '计数单位',
+                dataIndex: 'counting_unit',
             },
             {
                 title: '计量单位',
                 dataIndex: 'measurement_unit',
             },
             {
-                title: '物料用量',
-                render: (text, record) => {
+                title: '物料用量(计数单位)',
+                dataIndex: '',
+                render: (text, record, index) => {
                     let show
                     if (status == 5 || status == 6) {
                         show = <div>
-                            {record.isShowUsageMeasureQuantity == 1 &&
+                            {record.isShowCountingQuantity == 1 &&
                                 <>
-                                    <a>{record.usage_measure_quantity}</a>
-                                    <EditTwoTone onClick={() => this.editUsageMeasureQuantity(record, 5)} />
+                                    <a>{record.usage_counting_quantity}</a>
+                                    <EditTwoTone onClick={() => this.editReservedQuantity('usage_counting_quantity', 5, index)} />
                                 </>
                             }
-                            {record.isShowUsageMeasureQuantity == 2 &&
+                            {record.isShowCountingQuantity == 2 &&
                                 <>
-                                    <Input value={record.usage_measure_quantity} className="w100"
-                                        onChange={(event) => this.changeUsageMeasureQuantityInput(event, record)} onBlur={() => this.editUsageMeasureQuantity(record, 5)} />
+                                    <Input value={record.usage_counting_quantity} className="w100" name="usage_counting_quantity"
+                                        onChange={(event) => this.editReservedQuantityInput(event, index)} onBlur={() => this.editReservedQuantity('usage_counting_quantity', 5, index)} />
                                 </>
                             }
                         </div>
                     } else {
                         show = <>
-                            <span>{record.usage_measure_quantity}</span>
+                            <span>{record.usage_counting_quantity}</span>
+                        </>
+                    }
+                    return (
+                        <div>
+                            {show}
+                        </div>
+                    )
+                }
+            },
+            {
+                title: '物料用量(计量单位)',
+                render: (text, record, index) => {
+                    let show = <span>{record.measurement_counting_conversion_value * record.usage_counting_quantity}</span>
+                    return (
+                        <div>
+                            {show}
+                        </div>
+                    )
+
+                },
+            },
+            {
+                title: '单位成本(元)',
+                render: (text, record, index) => {
+                    let show
+                    if ((status == 5 || status == 6) && record.unit_measure_cost == 0) {
+                        show = <div>
+                            {record.isUnitMeasureCost == 1 &&
+                                <>
+                                    <a>{record.unit_measure_cost}</a>
+                                    <EditTwoTone onClick={() => this.editReservedQuantity('unit_measure_cost', 5, index)} />
+                                </>
+                            }
+                            {record.isUnitMeasureCost == 2 &&
+                                <>
+                                    <Input value={record.unit_measure_cost} className="w100" name='unit_measure_cost'
+                                        onChange={(event) => this.editReservedQuantityInput(event, index)}
+                                        onBlur={() => this.editReservedQuantity('unit_measure_cost', 4, index)} />
+                                </>
+                            }
+                        </div>
+                    } else {
+                        show = <>
+                            <span>{record.unit_measure_cost}</span>
                         </>
                     }
                     return (
@@ -1762,12 +2158,6 @@ class index extends Component {
                     )
 
                 },
-
-                dataIndex: 'usage_measure_quantity',
-            },
-            {
-                title: '单位成本',
-                dataIndex: 'unit_measure_cost',
             },
             {
                 title: '模具成本(元)',
@@ -1779,15 +2169,12 @@ class index extends Component {
         const showAccessories = [
             {
                 title: '辅料名称',
+                width: 100,
                 dataIndex: 'name',
             },
             {
                 title: '辅料说明',
                 dataIndex: 'remark',
-            },
-            {
-                title: '用量计算方式',
-                dataIndex: 'consumption_type_desc',
             },
             {
                 title: '物料编号',
@@ -1805,7 +2192,8 @@ class index extends Component {
             },
             {
                 title: '物料规格',
-                dataIndex: 'specifications',
+                width: 120,
+                dataIndex: 'specification',
             },
             {
                 title: '计量单位',
@@ -1813,39 +2201,67 @@ class index extends Component {
                 dataIndex: 'measurement_unit',
             },
             {
-                title: '单位用量',
-                width: 70,
+                title: '单位用量(计量单位)',
+                width: 100,
                 dataIndex: 'unit_consumption',
             },
             {
                 title: '理论用量',
-                width: 70,
-                dataIndex: 'theory_measure_quantity',
-            },
-            {
-                title: '放数',
-                width: 80,
-                dataIndex: 'reserved',
-                render: (text, record) => {
+                render: (text, record, index) => {
                     let show
                     if (status == 5 || status == 6) {
                         show = <div>
-                            {record.isShowReservedQuantity == 1 &&
+                            {record.isShowExcipientsTheoryMeasureQuantity == 1 &&
                                 <>
-                                    <a>{record.loss_quantity}</a>
-                                    <EditTwoTone onClick={() => this.editReservedQuantity(record, 4)} />
+                                    <a>{record.theory_measure_quantity}</a>
+                                    <EditTwoTone onClick={() => this.editReservedQuantity('theory_measure_quantity', 4, index)} />
                                 </>
                             }
-                            {record.isShowReservedQuantity == 2 &&
+                            {record.isShowExcipientsTheoryMeasureQuantity == 2 &&
                                 <>
-                                    <Input value={record.loss_quantity} className="w100"
-                                        onChange={(event) => this.editReservedQuantityInput(event, record)} onBlur={() => this.editReservedQuantity(record, 4)} />
+                                    <Input value={record.theory_measure_quantity} className="w100" name='theory_measure_quantity'
+                                        onChange={(event) => this.editReservedQuantityInput(event, index)}
+                                        onBlur={() => this.editReservedQuantity('theory_measure_quantity', 4, index)} />
                                 </>
                             }
                         </div>
                     } else {
                         show = <>
-                            <span>{record.loss_quantity}</span>
+                            <span>{record.theory_measure_quantity}</span>
+                        </>
+                    }
+                    return (
+                        <div>
+                            {show}
+                        </div>
+                    )
+
+                },
+
+            },
+            {
+                title: '放数',
+                render: (text, record, index) => {
+                    let show
+                    if (status == 5 || status == 6) {
+                        show = <div>
+                            {record.isShowReservedQuantity == 1 &&
+                                <>
+                                    <a>{record.reserved}</a>
+                                    <EditTwoTone onClick={() => this.editReservedQuantity('reserved', 4, index)} />
+                                </>
+                            }
+                            {record.isShowReservedQuantity == 2 &&
+                                <>
+                                    <Input value={record.reserved} className="w100" name='reserved'
+                                        onChange={(event) => this.editReservedQuantityInput(event, index)}
+                                        onBlur={() => this.editReservedQuantity('reserved', 4, index)} />
+                                </>
+                            }
+                        </div>
+                    } else {
+                        show = <>
+                            <span>{record.reserved}</span>
                         </>
                     }
                     return (
@@ -1858,18 +2274,52 @@ class index extends Component {
             },
             {
                 title: '辅料用量 ',
-                width: 70,
                 dataIndex: 'usage_measure_quantity',
             },
             {
                 title: '单位成本',
-                width: 70,
-                dataIndex: 'unit_measure_cost',
+                render: (text, record, index) => {
+                    let show
+                    if ((status == 5 || status == 6) && record.unit_measure_cost == 0) {
+                        show = <div>
+                            {record.isUnitMeasureCost == 1 &&
+                                <>
+                                    <a>{record.unit_measure_cost}</a>
+                                    <EditTwoTone onClick={() => this.editReservedQuantity('unit_measure_cost', 4, index)} />
+                                </>
+                            }
+                            {record.isUnitMeasureCost == 2 &&
+                                <>
+                                    <Input value={record.unit_measure_cost} className="w100" name='unit_measure_cost'
+                                        onChange={(event) => this.editReservedQuantityInput(event, index)}
+                                        onBlur={() => this.editReservedQuantity('unit_measure_cost', 4, index)} />
+                                </>
+                            }
+                        </div>
+                    } else {
+                        show = <>
+                            <span>{record.unit_measure_cost}</span>
+                        </>
+                    }
+                    return (
+                        <div>
+                            {show}
+                        </div>
+                    )
+
+                },
+
+
             },
             {
                 title: '辅料成本',
                 width: 70,
                 dataIndex: 'measure_cost',
+            },
+            {
+                title: '损耗量',
+                width: 80,
+                dataIndex: 'loss_quantity',
             },
         ]
         // 准备时长
@@ -1962,7 +2412,7 @@ class index extends Component {
                 },
             },
             {
-                title: '每份版数',
+                title: '每版份数',
                 dataIndex: 'unit_format_quantity',
                 render: (text, record, index) => {
                     let show
@@ -2097,29 +2547,33 @@ class index extends Component {
             {
                 title: '费率(元/小时)',
                 render: (text, record, index) => {
-                    let show
-                    if (status == 5 || status == 6) {
-                        show = <div>
-                            {record.isShowTotalRate == 1 &&
-                                <>
-                                    {record.total_rate}
-                                    <EditTwoTone onClick={() => this.changeArtificialInput(index, 'total_rate')} />
-                                </>
+                    let show = <span>{record.total_rate}</span>
 
-                            }
-                            {record.isShowTotalRate == 2 &&
-                                <>
-                                    <Input className="w100" name='total_rate' value={record.total_rate} onChange={this.changeFormatQutityInput}
-                                        onBlur={() => this.changeArtificialInput(index, 'total_rate')} />
-                                </>
 
-                            }
-                        </div>
-                    } else {
-                        show = <>
-                            <span>{record.total_rate}</span>
-                        </>
-                    }
+                    // if (status == 5 || status == 6) {
+                    //     show = <div>
+                    //         {record.isShowTotalRate == 1 &&
+                    //             <>
+                    //                 {record.total_rate}
+                    //                 <EditTwoTone onClick={() => this.changeArtificialInput(index, 'total_rate')} />
+                    //             </>
+
+                    //         }
+                    //         {record.isShowTotalRate == 2 &&
+                    //             <>
+                    //                 <Input className="w100" name='total_rate' value={record.total_rate} onChange={this.changeFormatQutityInput}
+                    //                     onBlur={() => this.changeArtificialInput(index, 'total_rate')} />
+                    //             </>
+
+                    //         }
+                    //     </div>
+                    // } else {
+                    //     show = <>
+                    //         <span>{record.total_rate}</span>
+                    //     </>
+                    // }
+
+
                     return (
                         <div>
                             {show}
@@ -2196,6 +2650,7 @@ class index extends Component {
             },
         ]
 
+
         // 理论数量
         let theoryMeasureQuantity
         if (status == 5 || status == 6) {
@@ -2270,6 +2725,152 @@ class index extends Component {
         }
 
 
+        let unitMeasureCost
+
+        if ((status == 5 || status == 6) && showListData.unit_measure_cost == 0) {
+            unitMeasureCost = <>
+                {
+                    isUnitMeasureCost == 1 &&
+                    <span>
+                        {showListData.unit_measure_cost}
+                        <EditTwoTone onClick={() => this.changeIsShowUsageCountingQuantity('unit_measure_cost')} />
+                    </span>
+                }
+                {
+                    isUnitMeasureCost == 2 &&
+                    <span>
+                        <Input name='unit_measure_cost' className='w100' onChange={this.changeQuantityInput}
+                            onBlur={() => this.changeIsShowUsageCountingQuantity('unit_measure_cost')} value={showListData.unit_measure_cost} />
+                    </span>
+                }
+            </>
+        } else {
+            unitMeasureCost = <span>
+                {showListData.unit_measure_cost}
+            </span>
+        }
+
+        // 委外
+        const columnsOutsource = [
+            {
+                title: '工艺名称',
+                dataIndex: 'name',
+            },
+            {
+                title: '计数单位',
+                dataIndex: 'counting_unit',
+            },
+            {
+                title: '委外数量',
+                dataIndex: 'process_quantity',
+            },
+            {
+                title: '辅料',
+                render: (text, record) => {
+                    let show
+                    if (record.supplementary_list.length != 0) {
+                        record.supplementary_list.forEach(e => {
+                            show = <>
+                                <span>{e.comsumable_name}</span>
+                            </>
+                        })
+                    }
+                    return (
+                        <div>
+                            {show}
+                        </div>
+                    )
+
+                }
+            },
+            {
+                title: '模具',
+                render: (text, record) => {
+                    let show
+                    if (record.mold_list.length != 0) {
+                        record.mold_list.forEach(e => {
+                            show = <>
+                                <span>{e.settings_tech_mould_name}</span>
+                            </>
+                        })
+                    }
+                    return (
+                        <div>
+                            {show}
+                        </div>
+                    )
+
+                }
+            },
+            {
+                title: '委外单位成本(元/产品单位)',
+                render: (text, record, index) => {
+                    let show
+
+                    if (status == 5 || status == 6) {
+                        show = <>
+                            {record.unitMeasureCost == 1 &&
+                                <span>
+                                    {record.unit_measure_cost}
+                                    {record.supplementary_list.length > 0 &&
+                                        record.supplementary_list.map(e => (
+                                            <span key={e.id}>{e.unit}</span>
+                                        ))
+
+                                    }
+                                    <EditTwoTone onClick={() => this.onChangeTotalRate(record)} />
+                                </span>
+                            }
+
+                            {record.unitMeasureCost == 2 &&
+                                <span>
+                                    <Input className='w100' name='unit_measure_cost' value={record.unit_measure_cost}
+                                        onChange={(event) => this.changeUnitMeasureCost(event, index)} onBlur={() => this.onChangeTotalRate(record)} />
+                                </span>
+                            }
+
+                        </>
+                    } else {
+                        show = <>
+                            <span>{record.unit_measure_cost}
+                                {record.supplementary_list.length > 0 &&
+                                    record.supplementary_list.map(e => (
+                                        <span key={e.id}>{e.unit}</span>
+                                    ))
+
+                                }</span>
+                        </>
+                    }
+                    return (
+                        <div>
+                            {show}
+                        </div>
+                    )
+
+                }
+
+            },
+            {
+                title: '委外总成本(元)',
+                dataIndex: 'measure_cost',
+            },
+        ]
+
+
+
+        let ingredient_list_name = []
+
+
+        if (showListData.ingredient_list && showListData.ingredient_list.length > 0 && showListData.ingredient_list[0].filter_condition_list.length != 0) {
+            showListData.ingredient_list.forEach(e => {
+                e.filter_condition_list.forEach(i => {
+                    ingredient_list_name.push(i)
+                })
+            })
+
+        }
+
+
         return (
             <div className="fs" >
 
@@ -2317,7 +2918,7 @@ class index extends Component {
                                                                     ))
 
                                                                 }
-
+                                                                <CategoryAndMaterial parent={component}></CategoryAndMaterial>
                                                                 {
                                                                     component.tech_list.map((tech, t1) =>
                                                                     (
@@ -2338,7 +2939,9 @@ class index extends Component {
                                                         <li className="parent_li" key={p}>
                                                             <Tag color="cyan" onClick={this.tree}>
                                                                 <div className="dib wEllipsis">
-                                                                    <span>{pre.name}</span>
+                                                                    <Tooltip placement="topLeft" title={pre.name}>
+                                                                        <span>{pre.name}</span>
+                                                                    </Tooltip>
                                                                 </div>
                                                             </Tag>
                                                             <ul>
@@ -2347,12 +2950,16 @@ class index extends Component {
                                                                         <li style={{ display: 'none' }} className="parent_li" key={s}>
                                                                             <Tag color="green" onClick={this.tree}>
                                                                                 <div className="dib wEllipsis">
-                                                                                    <span>{material.name}</span>
+                                                                                    <Tooltip placement="topLeft" title={material.name}>
+                                                                                        <span>{material.name}</span>
+                                                                                    </Tooltip>
                                                                                 </div>
                                                                             </Tag>
                                                                         </li>
                                                                     ))
                                                                 }
+
+                                                                <CategoryAndMaterial parent={pre}></CategoryAndMaterial>
                                                                 {
                                                                     pre.tech_list.map((tech, t2) => (
                                                                         <li style={{ display: 'none' }} className="parent_li" key={t2}>
@@ -2374,6 +2981,7 @@ class index extends Component {
                                                                     <span>{combination.name}</span>
                                                                 </div>
                                                             </Tag>
+                                                            <CategoryAndMaterial parent={combination}></CategoryAndMaterial>
                                                             <ul>
                                                                 {
                                                                     combination.tech_list.map((tech, t3) => (
@@ -2387,14 +2995,12 @@ class index extends Component {
                                                         </li>
                                                     ))
                                                 }
-
-
                                                 {
                                                     item.product_list.map((product, p) => (
                                                         <li className="parent_li" key={p}>
                                                             <Tag size="purple" onClick={this.tree}>{product.name}</Tag>
+                                                            <CategoryAndMaterial parent={product}></CategoryAndMaterial>
                                                             <ul style={{ marginTop: 6 }}>
-
                                                                 {
                                                                     product.product_tech_list.map((pTech, t4) => (
                                                                         <li style={{ display: 'none' }} className="parent_li" key={t4}>
@@ -2423,32 +3029,48 @@ class index extends Component {
                                                                         </li>
                                                                     ))
                                                                 }
-
-
-                                                                {
-                                                                    product.packing_unit_list.map((packing, p) => (
-                                                                        <li style={{ display: 'none' }} className="parent_li" key={p}>
-                                                                            <Tag color="pink" onClick={this.tree}>
-                                                                                <div className="dib wEllipsis">
-                                                                                    <span>{packing.name}</span>
-                                                                                </div>
-                                                                            </Tag>
-                                                                            <ul>
-                                                                                {
-                                                                                    packing.tech_list.map((pTech, pt) => (
-                                                                                        <li style={{ display: 'none' }} className="parent_li" key={pt}>
-                                                                                            <TreeTag parent={pTech} />
-                                                                                        </li>
-                                                                                    ))
-                                                                                }
-
-                                                                            </ul>
-                                                                        </li>
-                                                                    ))
-                                                                }
                                                             </ul>
                                                         </li >
                                                     ))
+                                                }
+
+
+                                                {item.packing_list.map((packingUnit, pu) => (
+                                                    <li className="parent_li" key={pu}>
+                                                        <Tag size="purple" onClick={this.tree}>
+                                                            <div className="dib wEllipsis">
+                                                                <span>{packingUnit.name}</span>
+                                                            </div>
+                                                        </Tag>
+                                                        <ul>
+                                                            {
+                                                                packingUnit.packing_unit_list.map((packing, p) => (
+
+
+                                                                    <li style={{ display: 'none' }} className="parent_li" key={p}>
+                                                                        <Tag color="pink" onClick={this.tree}>
+                                                                            <div className="dib wEllipsis">
+                                                                                <span>{p + 1}级:{packing.name}</span>
+                                                                            </div>
+                                                                        </Tag>
+
+                                                                        <ul>
+
+                                                                            {packing.tech_list.map((pTech, pt) => (
+                                                                                <li style={{ display: 'none' }} className="parent_li" key={pt}>
+                                                                                    <TreeTag parent={pTech} />
+                                                                                </li>
+                                                                            ))
+                                                                            }
+
+                                                                        </ul>
+                                                                    </li>
+
+                                                                ))
+                                                            }
+                                                        </ul>
+                                                    </li>
+                                                ))
                                                 }
 
                                             </ul >
@@ -2459,7 +3081,7 @@ class index extends Component {
 
                             </ul >
                         </div >
-                    </div>
+                    </div >
                 }
 
                 {/* 列表 */}
@@ -2496,6 +3118,11 @@ class index extends Component {
                                             </>
                                         }
                                         <div className="mt-15">
+                                            <Table rowKey={record => record.key} columns={columnsOutsource} dataSource={techOutsourcingList}
+                                                bordered title={() => '委外合计（元）'} pagination={false} />
+                                        </div>
+
+                                        <div className="mt-15">
                                             <Table rowKey={record => record.key} columns={columnsFreight} dataSource={freightList}
                                                 bordered title={() => '运费合计（元）'} pagination={false} />
                                         </div>
@@ -2530,14 +3157,13 @@ class index extends Component {
                             <Input onChange={this.changeDay} style={{ width: '300px' }} placeholder="请输入有效期数" value={showData.valid_period_day} addonAfter="天" />
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
-
                             {flagIsShowCommit == 2 &&
                                 <>
-                                    <Button style={{ marginLeft: '20px' }} type="primary" size={size} onClick={this.commitIt}>提交</Button>
+                                    <Button style={{ marginLeft: '20px' }} type="primary" danger onClick={this.backBOM}>退回BOM</Button>
+                                    <Button style={{ marginLeft: '20px' }} type="primary" onClick={this.commitIt}>提交</Button>
                                 </>
 
                             }
-
                         </div>
                     </div>
                 </div>
@@ -2545,7 +3171,7 @@ class index extends Component {
                 {/* 主料成本 */}
                 <div>
                     <Modal title="主料成本" visible={isVisibleIngredientsMaterial} onOk={this.handleOkIngredientsMaterial}
-                        onCancel={this.handleCancelIngredientsMaterial} cancelText="取消" okText="确定" width="1500px">
+                        onCancel={this.handleCancelIngredientsMaterial} cancelText="取消" okText="确定" width="1400px">
                         <div className='modalHeiht'>
                             <div>
                                 <div className="fs mb-15">
@@ -2559,15 +3185,15 @@ class index extends Component {
                                     <div className="w300">计量单位：{showListData.measurement_unit}</div>
                                 </div>
                                 <div className="fs mb-15">
-                                    <div className="w300">理论数量({showListData.counting_unit})：{theoryMeasureQuantity}</div>
+                                    <div className="w300">理论数量({showListData.counting_unit})(不含损耗)：{theoryMeasureQuantity}</div>
                                     <div className="w300">损耗数量({showListData.counting_unit})：{lossQuantity}</div   >
                                     <div className="w300">用料数量({showListData.counting_unit})：{showListData.usage_counting_quantity}</div>
                                     <div className="w300">用料数量({showListData.measurement_unit})：{usageMeasureQuantity} </div>
                                 </div>
 
                                 <div className="fs mb-15">
-                                    <div className="w300">单位成本(元/{showListData.measurement_unit})：{showListData.unit_measure_cost}</div>
-                                    <div className="w200">主料成本(元)：{showListData.measure_cost}</div>
+                                    <div className="w300">单位成本(元/{showListData.measurement_unit})：{unitMeasureCost}</div>
+                                    <div className="w300">主料成本(元)：{showListData.measure_cost}</div>
                                 </div>
                             </div>
                             <div className='mb-15'>
@@ -2583,7 +3209,7 @@ class index extends Component {
                 {/* 辅料成本 */}
                 < div >
                     <Modal title="辅料成本" visible={isVisibleAccessoriesCost} onOk={this.handleOkAccessoriesCost}
-                        onCancel={this.handleCancelAccessoriesCost} cancelText="取消" okText="确定" width="1350px">
+                        onCancel={this.handleCancelAccessoriesCost} cancelText="取消" okText="确定" width="1400px">
                         <div>
                             {showListData.record_type == 2 &&
                                 <div className='mb-15'>
@@ -2605,11 +3231,11 @@ class index extends Component {
                     <Modal title="制造及人工成本" visible={isVisibleArtificialCost} onOk={this.handleOkArtificialCost}
                         onCancel={this.handleCancelArtificialCost} destroyOnClose={true} cancelText="取消" okText="确定" width="1000px">
                         {/* 子件数量>1 */}
-                        <h3>工艺：{showListData.component_type_desc}/{showListData.type_desc}</h3>
+                        {/* <h3>工艺：{showListData.name}/{showListData.type_desc}</h3>
                         <div className='fs mb-15'>
                             <h3 style={{ marginRight: 70 }}>产品名称：{showListData.product_name}</h3>
                             <h3 className='w200'>询价数量：{showListData.product_quantity}{showListData.product_counting_unit}</h3>
-                        </div>
+                        </div> */}
 
 
                         {/* 子件工艺 */}
@@ -2633,7 +3259,19 @@ class index extends Component {
                                     </div>
                                 </div>
                                 <div className="fs mb-15">
-                                    <div className="w300">主料筛选条件：{showListData.filterName}</div>
+                                    <div className="w300">主料筛选条件：
+                                        {ingredient_list_name.length > 0 &&
+                                            ingredient_list_name.map((e, index) => (
+                                                <span style={{ display: 'lineBlock' }} key={index}>
+                                                    {e.name}({e.value})
+
+                                                    {ingredient_list_name.length != index + 1 &&
+                                                        <span> ，</span>
+                                                    }
+                                                </span>
+                                            ))
+                                        }
+                                    </div>
                                     <div className="w300">工艺名称：{showListData.tech_name}</div>
                                     <div className="w300">工艺面：{showListData.tech_side}</div>
                                 </div>
@@ -2646,8 +3284,8 @@ class index extends Component {
                                 </div>
                                 <div className="fs mb-15">
                                     <div className="w300">模数：{showListData.modulus}</div>
-                                    <div className="w300">准备时长（小时）：{standardPrepareTime}</div>
-                                    <div className="w300">效能( {showListData.counting_unit} /小时)：{standardEfficiency}</div>
+                                    <div className="w300">准备时长：{standardPrepareTime}（小时）</div>
+                                    <div className="w300">效能：{standardEfficiency}（{showListData.counting_unit} /小时）</div>
                                 </div>
                                 <div className="fs mb-15">
                                     <div className="w300">进料开数：{showListData.open_number}</div>
@@ -2690,10 +3328,10 @@ class index extends Component {
                                     <div className="w300">准备时长(小时)：{showListData.standard_prepare_time}</div>
                                 </div>
                                 <div className="fs mb-15">
-                                    <div className="w300">效能({showListData.counting_unit}/小时)：{showListData.standard_efficiency}</div>
+                                    <div className="w300">效能：{showListData.standard_efficiency}（{showListData.counting_unit}/小时）</div>
                                 </div>
                                 <div className="fs mb-15">
-                                    <Table bordered rowKey={record => record.keyIndex} columns={componentProcess} dataSource={showAccessoriesList} pagination={false} />
+                                    <Table style={{ width: '100%' }} bordered rowKey={record => record.keyIndex} columns={componentProcess} dataSource={showAccessoriesList} pagination={false} />
                                 </div>
                             </div>
                         }
@@ -2713,8 +3351,7 @@ class index extends Component {
                                 </div>
                                 <div className="fs mb-15">
                                     <div className="w300">计数单位：{showListData.counting_unit}</div>
-                                    <div className="w300">UPH：{showListData.uph}</div>
-
+                                    <div className="w300">UPPH：{showListData.upph}</div>
                                 </div>
                                 <div>
                                     <Table bordered rowKey={record => record.keyIndex} columns={line} dataSource={showAccessoriesList} pagination={false} />
@@ -2735,8 +3372,8 @@ class index extends Component {
                                     <div className="w300">UOM规格：{showListData.standard_prepare_time}</div>
                                 </div>
                                 <div className="fs mb-15">
-                                    <div className="w300">准备时长(小时)：{showListData.standard_prepare_time}</div>
-                                    <div className="w300">效能({showListData.uom_unit}/小时)：{showListData.tech_side}</div>
+                                    <div className="w300">准备时长：{showListData.standard_prepare_time} （小时）</div>
+                                    <div className="w300">效能：{showListData.tech_side} （{showListData.uom_unit}/小时）</div>
                                 </div>
                                 <div>
                                     <Table bordered rowKey={record => record.keyIndex} columns={UOM_crafts} dataSource={showAccessoriesList} pagination={false} />
@@ -2757,9 +3394,9 @@ class index extends Component {
                                     <div className="w300">加工数量({showListData.product_counting_unit})：{showListData.process_quantity}</div>
                                 </div>
                                 <div className="fs mb-15">
-                                    <div className="w300">准备时长(小时)：{showListData.standard_prepare_time}</div>
-                                    <div className="w300">加工时长(小时)：{showListData.process_hour}</div>
-                                    <div className="w300">效能({showListData.product_counting_unit}/小时)：{showListData.standard_efficiency}</div>
+                                    <div className="w300">准备时长：{showListData.standard_prepare_time} （小时）</div>
+                                    <div className="w300">加工时长：{showListData.process_hour} （小时）</div>
+                                    <div className="w300">效能：{showListData.standard_efficiency} （{showListData.product_counting_unit}/小时）</div>
                                 </div>
                                 <div>
                                     <Table bordered rowKey={record => record.keyIndex} columns={packageCrafts} dataSource={showAccessoriesList} pagination={false} />
@@ -2768,6 +3405,35 @@ class index extends Component {
                         }
                     </Modal>
                 </div >
+
+                <div>
+                    <Modal
+                        title="退回"
+                        visible={visibleBack}
+                        onOk={this.handleOkBack}
+                        onCancel={this.handleCancelBack}
+                        cancelText="取消" okText="确定"
+                        width={800}
+                    >
+                        <div>
+                            <div className='fs mb-15'>
+                                <div>
+                                    <span style={{ width: 70, display: 'block' }}>
+                                        退回说明：
+                                    </span>
+                                </div>
+                                <div style={{ width: '100%' }}>
+                                    <TextArea value={description} onChange={this.onChangeDescription} rows={3} />
+                                </div>
+
+                            </div>
+                            <div style={{ marginLeft: 70 }} >注：该操作将退回至BOM配置阶段，已填写的核价信息将被清除。该操作不可逆，请谨慎进行！</div>
+                        </div>
+
+
+                    </Modal>
+
+                </div>
             </div >
         );
     }

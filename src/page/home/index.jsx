@@ -1,9 +1,9 @@
 import React, { Component } from "react";
-import { Button, Input, Table, Modal, Divider, Select, message, Popconfirm, Pagination, DatePicker } from 'antd';
+import { Button, Input, Table, Divider, Select, message, Popconfirm, Pagination, DatePicker } from 'antd';
 // import PageMenu from '../common/page_menu'
 import http from '../../http/index'
 import api from "../../http/httpApiName";
-import path from '../../../public/common'
+import path from '../common/common'
 import './index.css'
 import axios from "axios";
 
@@ -19,6 +19,10 @@ export default class Hello extends Component {
         dataIndex: 'number',
       },
       {
+        title: '客户名称',
+        dataIndex: 'customer_name',
+      },
+      {
         title: '询价状态',
         dataIndex: 'status_desc',
       },
@@ -26,11 +30,7 @@ export default class Hello extends Component {
         title: '询价类型',
         dataIndex: 'type_desc',
       },
-      {
-        title: '客户名称',
-        dataIndex: 'customer_name',
 
-      },
       {
         title: '创建时间',
         dataIndex: 'created_at',
@@ -63,6 +63,9 @@ export default class Hello extends Component {
         render: (text, record) => {
           let flag
           let isEdit
+          let deleteShow
+          let cancelShow
+
           if (record.status == 2) {
             flag = <a onClick={() => this.goDistribute(record)}>分配</a>
           } else {
@@ -71,9 +74,33 @@ export default class Hello extends Component {
 
           if (record.status == 1) {
             isEdit = <a onClick={() => this.goLookInquiryList(record)}>编辑</a>
+            deleteShow = <Popconfirm
+              title="您确定要删除当条询价单么？"
+              onConfirm={() => this.deleteIt(record.id)}
+              okText="是"
+              cancelText="否"
+            >
+              <a style={{ color: 'red' }}>删除</a>
+            </Popconfirm>
           } else {
             isEdit = <a style={{ color: '#ccc' }}>编辑</a>
+            deleteShow = <a style={{ color: '#ccc' }}>删除</a>
           }
+
+
+          if (record.status < 7) {
+            cancelShow = <Popconfirm
+              title="您确定要取消当条询价单么？"
+              onConfirm={() => this.cancelIt(record.id)}
+              okText="是"
+              cancelText="否"
+            >
+              <a style={{ color: 'red' }}>取消</a>
+            </Popconfirm>
+          } else {
+            cancelShow = <a style={{ color: '#ccc' }}>取消</a>
+          }
+
 
           return (
             <>
@@ -83,24 +110,9 @@ export default class Hello extends Component {
               <Divider type="vertical" />
               {flag}
               <Divider type="vertical" />
-              <Popconfirm
-                title="您确定要删除当条询价单么？"
-                onConfirm={() => this.deleteIt(record.id)}
-                okText="是"
-                cancelText="否"
-              >
-                <a style={{ color: 'red' }}>删除</a>
-              </Popconfirm>
+              {deleteShow}
               <Divider type="vertical" />
-              <Popconfirm
-                title="您确定要取消当条询价单么？"
-                onConfirm={() => this.cancelIt(record.id)}
-                okText="是"
-                cancelText="否"
-              >
-                <a style={{ color: 'red' }}>取消</a>
-              </Popconfirm>
-
+              {cancelShow}
             </>
           )
 
@@ -115,7 +127,7 @@ export default class Hello extends Component {
       },
       {
         id: 1,
-        name: '意向询价'
+        name: '阶梯询价'
       },
       {
         id: 2,
@@ -135,19 +147,24 @@ export default class Hello extends Component {
       type: '',
       created_at_start: '',
       created_at_end: '',
-      quotation_order_number: ''
+      quotation_order_number: '',
+      product_name: '',
+      creator_id: '',
     },
     pageHeight: 0,
+    type: 1,
+    adminList: []
   }
   componentDidMount() {
     this.getList()
+    this.getAdminList()
   }
 
 
-  getList() {
+  getList(type = 1) {
     const { pagination, serchData } = this.state
     axios.all([
-      http.get(api.list, {
+      http.get(api.list[type], {
         params: {
           per_page: pagination.pageSize,
           page: pagination.current,
@@ -157,7 +174,9 @@ export default class Hello extends Component {
           type: serchData.type,
           created_at_start: serchData.created_at_start,
           created_at_end: serchData.created_at_end,
-          quotation_order_number: serchData.quotation_order_number
+          quotation_order_number: serchData.quotation_order_number,
+          product_name: serchData.product_name,
+          creator_id: serchData.creator_id
         }
       }),
       http.get(api.orderStatus)
@@ -179,22 +198,19 @@ export default class Hello extends Component {
     }))
   }
   onChangePage = (page, pageSize) => {
-    const { pagination } = this.state
+    const { pagination, type } = this.state
     pagination.current = page
     pagination.pageSize = pageSize
     this.setState({ pagination })
-    this.getList()
+    this.getList(type)
   }
-  serchIt = () => {
+  serchIt = (type) => {
     const { pagination } = this.state
     pagination.current = 1
-    this.setState({ pagination })
-    this.getList()
+    this.setState({ pagination, type })
+    this.getList(type)
   }
 
-  confirm = () => {
-
-  }
   deleteIt = (id) => {
     http.get(api.orderDelete, {
       params: {
@@ -282,27 +298,16 @@ export default class Hello extends Component {
     )
   }
 
-
   serchInputData = (e) => {
     const { serchData } = this.state
     serchData[e.target.name] = e.target.value
     this.setState({ serchData })
   }
 
-
-
-  onSerchStatus = (value) => {
+  onSerchStatus = (value, key) => {
     const { serchData } = this.state
-    serchData.status = value
+    serchData[key] = value
     this.setState({ serchData })
-    this.getList()
-  }
-
-  onSerchType = (value) => {
-    const { serchData } = this.state
-    serchData.type = value
-    this.setState({ serchData })
-    this.getList()
   }
 
   onChangeTime = (date, dateString) => {
@@ -310,37 +315,49 @@ export default class Hello extends Component {
     serchData.created_at_start = dateString[0]
     serchData.created_at_end = dateString[1]
     this.setState({ serchData })
-    this.getList()
+  }
+
+  getAdminList() {
+    http.get(api.adminList).then(res => {
+      if (res.code == 1) {
+        let data = res.data.items
+        this.setState({ adminList: data, })
+      } else {
+        message.warning(res.message);
+      }
+    })
   }
 
 
-
   render() {
-    const { columns, statusArr, typeArr, pagination, pageSizeOptions, } = this.state
+    const { columns, statusArr, typeArr, pagination, pageSizeOptions, adminList } = this.state
     const { Option } = Select;
     const { RangePicker } = DatePicker;
     return (
       <div id="currentPage" className="page">
         <div className="search-line">
           <div className="mr-20">
-            <span>客户名称：</span>
-            <Input name='customer_name' onChange={this.serchInputData} className="input-w" placeholder="请输入客户名称" />
-          </div>
-          <div className="mr-20">
             <span>询价单号：</span>
             <Input name='number' onChange={this.serchInputData} className="input-w" placeholder="请输入询价单号" />
           </div>
           <div className="mr-20">
-            <span>报价单号：</span>
-            <Input name='quotation_order_number' onChange={this.serchInputData} className="input-w" placeholder="请输入报价单号" />
+            <span>客户名称：</span>
+            <Input name='customer_name' onChange={this.serchInputData} className="input-w" placeholder="请输入客户名称" />
           </div>
-          <Button type="primary" onClick={this.serchIt}>搜索</Button>
+          <div className="mr-20">
+            <span>产品名称：</span>
+            <Input name='product_name' onChange={this.serchInputData} className="input-w" placeholder="请输入产品名称" />
+          </div>
+          <div className="mr-20">
+            <span>询价时间：</span>
+            <RangePicker placeholder={['开始时间', '结束时间']} onChange={this.onChangeTime} />
+          </div>
         </div>
 
         <div className="search-line">
           <div className="mr-20">
             <span>询价状态：</span>
-            <Select className="input-w" placeholder="请选择" onChange={this.onSerchStatus}>
+            <Select className="input-w" placeholder="请选择" onChange={(e) => this.onSerchStatus(e, 'status')}>
               {statusArr.map(item => (
                 <Option key={item.id} value={item.id}>{item.name}</Option>
               ))
@@ -349,22 +366,39 @@ export default class Hello extends Component {
           </div>
           <div className="mr-20">
             <span>询价类型：</span>
-            <Select className="input-w" placeholder="请选择" onChange={this.onSerchType}>
+            <Select className="input-w" placeholder="请选择" onChange={(e) => this.onSerchStatus(e, 'type')}>
               {typeArr.map(item => (
                 <Option key={item.id} value={item.id}>{item.name}</Option>
               ))
               }
             </Select>
           </div>
-
           <div className="mr-20">
-            <span>询价时间：</span>
-            <RangePicker placeholder={['开始时间', '结束时间']} onChange={this.onChangeTime} />
+            <span>创建人员：</span>
+            <Select
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
+              className="input-w"
+              placeholder="请选择"
+              onChange={(e) => this.onSerchStatus(e, 'creator_id')}>
+              {adminList.map(item => (
+                <Option key={item.id} value={item.id}>{item.name}</Option>
+              ))
+              }
+            </Select>
+          </div>
+          <div className="mr-20">
+            <span>报价单号：</span>
+            <Input name='quotation_order_number' onChange={this.serchInputData} className="input-w" placeholder="请输入报价单号" />
+          </div>
+          <div className="mr-20">
+            <Button type="primary" className="mr-20" onClick={() => this.serchIt(1)}>搜索</Button>
+            <Button type="primary" onClick={() => this.serchIt(2)}>搜索公司全部相关信息</Button>
           </div>
         </div>
-
-
-        {/* to={'/addList?id=' + 1} */}
         <Button type="primary" onClick={this.addListData}>新建询价单</Button>
         <div className="tab-block">
           <Table rowKey={record => record.id} columns={columns} dataSource={this.state.dataList} pagination={false} />

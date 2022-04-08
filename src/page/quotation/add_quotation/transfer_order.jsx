@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { Table, Button, Checkbox, message, Form, Upload, Input, InputNumber } from 'antd';
+import { Table, Button, message, InputNumber, Select } from 'antd';
 import { EditTwoTone } from '@ant-design/icons';
-import common from '../../../../public/common'
+import common from '../../common/common'
 import http from '../../../http/index'
 import api from '../../../http/httpApiName'
 
@@ -19,10 +19,58 @@ class transfer_order extends Component {
                 title: '产品编号',
                 dataIndex: 'number',
             },
-            // {
-            //     title: '产品说明',
-            //     dataIndex: 'address',
-            // },
+            {
+                title: '产品说明',
+                render: (text, record) => {
+                    let show = []
+                    record.options.forEach(e => {
+                        show.push(
+                            {
+                                name: e.param.name,
+                                pid: e.param.id,
+                                child: [
+                                    {
+                                        name: e.name
+                                    }
+                                ]
+                            }
+                        )
+                    })
+                    let list = {}
+                    show.forEach(i => {
+                        if (list[i.pid]) {
+                            list[i.pid].child.push(...i.child)
+                        } else {
+                            list[i.pid] = i
+                        }
+
+                    })
+
+                    let data = []
+                    for (let key in list) {
+                        let name = []
+                        for (let keyChild in list[key].child) {
+                            name.push(list[key].child[keyChild].name)
+                        }
+                        list[key].child = name.join('，')
+                        data.push(list[key])
+                    }
+
+
+                    return (
+                        <div>
+                            {
+                                data.map((e, index) => (
+                                    <div key={index}>
+                                        {e.name}（{e.child}）
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    )
+
+                },
+            },
             {
                 title: '产品规格',
                 dataIndex: 'specification',
@@ -89,7 +137,8 @@ class transfer_order extends Component {
         proList: [],
         showData: {
             inquiry_order: {},
-            attaches: []
+            attaches: [],
+            order_id: ''
         },
 
         selectProductList: [],
@@ -113,10 +162,22 @@ class transfer_order extends Component {
         }).then(res => {
             if (res.code == 1) {
                 let data = res.data
-                console.log('data: ', data);
-                let pData = res.data.inquiry_order.single_products
                 this.getSettlement(data.inquiry_order.settlement_id)
-                pData.forEach(e => {
+                this.getQuotationOrder(data.inquiry_order_id)
+                this.setState({
+                    showData: data,
+                })
+            } else {
+                message.warning(res.message)
+            }
+        })
+    }
+
+    getQuotationOrder(id) {
+        http.get(api.productList + id + '/product/list').then(res => {
+            if (res.code == 1) {
+                let data = res.data.items
+                data.forEach(e => {
                     e.checked = false
                     e.check_price_order_details = e.check_price_order_details.filter(i => {
                         i.unitlPrice = i.actual_quote / i.quantity
@@ -127,15 +188,13 @@ class transfer_order extends Component {
                     })
                 })
                 this.setState({
-                    showData: data,
-                    proList: pData
+                    proList: data
                 })
             } else {
                 message.warning(res.message)
             }
         })
     }
-
 
     getSettlement(id) {
         http.get(api.settlementGet, {
@@ -152,11 +211,9 @@ class transfer_order extends Component {
         })
     }
 
-
     downLoadFile = (id, storage_location) => {
         common.downFile.down(id, storage_location)
     }
-
 
     onChangeCheckbox(event, index) {
         const { proList, selectProductList } = this.state
@@ -179,6 +236,7 @@ class transfer_order extends Component {
         }
 
     }
+
     // 这个方法研究下
     onSelectChange = (keys, rows) => {
         const { selectMin } = this.state
@@ -202,9 +260,7 @@ class transfer_order extends Component {
                         min = i.quantity
                     }
                 })
-
             }
-
             selectMin[e.id] = min
         })
         this.setState({
@@ -212,6 +268,7 @@ class transfer_order extends Component {
             selectProductList: [...rows],
         });
     };
+
     isShow = (data, index) => {
         const { selectProductList } = this.state
         let num = data.isShowQuantity
@@ -232,7 +289,6 @@ class transfer_order extends Component {
         record.minQuantity = value
         let numArr = []
         let minData = value
-
         selectProductList.forEach(e => {
             e.check_price_order_details.forEach(i => {
                 numArr.push(i)
@@ -243,18 +299,16 @@ class transfer_order extends Component {
                 })
             })
         })
-
-
         this.setState({ selectProductList })
-
-
     }
+
+    // 转订单
+
     creatOrder = () => {
-        const { selectProductList, pageId } = this.state
-        console.log('selectProductList: ', selectProductList);
+        const { selectProductList, pageId, showData } = this.state
         let params = {
             id: Number(pageId),
-            details: []
+            details: [],
         }
         selectProductList.forEach(e => {
             params.details.push(
@@ -264,6 +318,7 @@ class transfer_order extends Component {
                 }
             )
         })
+
         http.post(api.orderTransfer, params).then(res => {
             if (res.code == 1) {
                 message.success('创建成功')
@@ -273,6 +328,8 @@ class transfer_order extends Component {
                         {
                             data: {
                                 type: 1,
+                                order_id: showData.order_id
+
                             },
                             history: history
                         }
@@ -286,6 +343,22 @@ class transfer_order extends Component {
 
     }
 
+    handleChangeSelect = (value) => {
+        const { selectProductList } = this.state
+        let data = common.clone.deepClone(selectProductList)
+        data.forEach(e => {
+            e.check_price_order_details.forEach(i => {
+                if (i.id == value) {
+                    e.selectUnitPrice = i.unitlPrice
+                    e.minQuantity = i.quantity
+                    console.log('e.selectUnitPrice: ', e.selectUnitPrice);
+                }
+            })
+        })
+        this.setState({ selectProductList: data })
+
+    }
+
 
     render() {
         const { columnsPro, proList, showData, selectProductList, selectedRowKeys, selectMin, descriptionName } = this.state
@@ -294,7 +367,7 @@ class transfer_order extends Component {
             selectedRowKeys,
             onChange: this.onSelectChange,
         };
-
+        const { Option } = Select;
         const selectProduct = [
             {
                 title: '产品名称',
@@ -318,23 +391,39 @@ class transfer_order extends Component {
             },
             {
                 title: '下单数量',
-                render: (text, record, index) => (
-                    <div>
-                        {record.isShowQuantity == 1 &&
-                            <div>
-                                {record.minQuantity}
-                                <EditTwoTone className="ml-10" onClick={() => this.isShow(record, index)} />
-                            </div>
-                        }
-                        {record.isShowQuantity == 2 &&
-                            <div>
-                                <InputNumber className="w120 mr-10" value={record.minQuantity} min={selectMin[record.id]}
-                                    onChange={(event) => this.changeaCtualQuote(event, record)} onBlur={() => this.isShow(record, index)} />
-                            </div>
-                        }
+                render: (text, record, index) => {
+                    let show
+                    if (showData.inquiry_order.type == 2) {
+                        show = <>
+                            <Select defaultValue={record.check_price_order_details[0].id} style={{ width: '120px' }} onChange={this.handleChangeSelect}>
+                                {record.check_price_order_details.map(item => (
+                                    <Option key={item.id} value={item.id}>{item.quantity}{item.unit}</Option>
+                                ))
+                                }
+                            </Select>
+                        </>
+                    } else {
+                        show = <div>
+                            {record.isShowQuantity == 1 &&
+                                <div>
+                                    {record.minQuantity}
+                                    <EditTwoTone className="ml-10" onClick={() => this.isShow(record, index)} />
+                                </div>
+                            }
+                            {record.isShowQuantity == 2 &&
+                                <div>
+                                    <InputNumber className="w120 mr-10" value={record.minQuantity} min={selectMin[record.id]}
+                                        onChange={(event) => this.changeaCtualQuote(event, record)} onBlur={() => this.isShow(record, index)} />
+                                </div>
+                            }
 
-                    </div>
-                )
+                        </div>
+                    }
+                    return (
+                        <div>{show}</div>
+                    )
+
+                }
             },
             {
                 title: '单价(元)',
@@ -363,21 +452,24 @@ class transfer_order extends Component {
                     <span className='w300 db'>询价时间：{showData.inquiry_order.created_at}</span>
                 </div>
                 <div className='mb-15 fs'>
+                    <span className='w300 db'>询价类型：{showData.inquiry_order.type_desc}</span>
                     <span className='w300 db ellipsis-line'>客户名称：{showData.customer_name}</span>
                     <span className='w300 db'>联系电话：{showData.inquiry_order.customer_representative_contact}</span>
-                    <span className='w300 db'>销售人员：{showData.inquiry_order.salesperson_name}</span>
+
                 </div>
                 <div className='mb-15 fs'>
+                    <span className='w300 db'>销售人员：{showData.inquiry_order.salesperson_name}</span>
                     <span className='w300 db'>交付方式：{showData.inquiry_order.delivery_mode_desc}</span>
                     <span className='w300 db'>交付期限：{showData.inquiry_order.delivery_at}</span>
-                    <span className='w300 db'>交付地址：{showData.inquiry_order.address}</span>
+
                 </div>
                 <div className='mb-15 fs'>
+                    <span className='w300 db'>交付地址：{showData.inquiry_order.address}</span>
                     <span className='w300 db'>运输方式：{showData.inquiry_order.transport_mode_desc}</span>
                     <span className='w300 db'>结算方式：{descriptionName}</span>
-                    <span >结算说明：{showData.inquiry_order.settlement_instr}</span>
                 </div>
                 <div className='mb-15 fs'>
+                    <span className='w300 db'>结算说明：{showData.inquiry_order.settlement_instr}</span>
                     <span className='w300 db'>报价备注：{showData.remark}</span>
                 </div>
                 <div className='mb-15'>

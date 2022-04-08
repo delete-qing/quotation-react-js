@@ -1,4 +1,4 @@
-FROM registry.cn-shenzhen.aliyuncs.com/znbz/runtime-env-node:16.13.0 as builder
+FROM registry.cn-hangzhou.aliyuncs.com/maikeos/runtime-env-node:16.13.0 as builder
 
 WORKDIR /var/www/html
 
@@ -6,7 +6,7 @@ COPY . /var/www/html
 
 RUN yarn && yarn build
 
-FROM registry.cn-shenzhen.aliyuncs.com/znbz/runtime-env-nginx:1.19.9 as prod
+FROM registry.cn-hangzhou.aliyuncs.com/maikeos/runtime-env-nginx:1.19.9 as prod
 
 WORKDIR /var/www/html
 

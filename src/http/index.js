@@ -9,11 +9,13 @@ let instance = axios.create({
 
 // axios.defaults.headers.post['Content-Type'] = 'application/json';
 
-instance.interceptors.request.use(function (config) {
+instance.interceptors.request.use(function (config) {   
 
     let token = ''
     if (process.env.NODE_ENV == 'development') {
-        token = 'bddb5088-6ac5-4cc9-8937-179b16005798'
+        token = '915eb99f-e90f-497c-b84c-00feaa0a6b71'
+        // 915eb99f-e90f-497c-b84c-00feaa0a6b71
+        // bddb5088-6ac5-4cc9-8937-179b16005798
     } else {
         let query = location.search.substring(1)
         let vars = query.split("&")
@@ -57,6 +59,14 @@ instance.interceptors.response.use(function (response) {
                 message: data.message
             };
         }
+        // else if (response.statusText == 'OK') {
+        //     result = {
+        //         code: 1,
+        //         data: data
+        //     };
+        // }
+
+
 
         return result;
     } else if (response.status === -200) {

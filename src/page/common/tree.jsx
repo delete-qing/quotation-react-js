@@ -35,7 +35,6 @@ export default class extends Component {
         const { tech } = this.state
         return (
             <div>
-
                 <div className="tech-structure">
                     <Tag onClick={this.tree}>
                         <div className="dib wEllipsis">

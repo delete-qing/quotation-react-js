@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
-import { Select, Input, Button, Modal, Table, Divider, DatePicker, message, Cascader, Tooltip } from 'antd';
+import { Select, Input, Button, Modal, Table, Divider, DatePicker, message, Cascader } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import http from '../../../../http/index'
 import api from '../../../../http/httpApiName'
-import common from '../../../../../public/common';
+import common from '../../../common/common';
 import '../../index.css'
 
 class add_list extends Component {
@@ -63,6 +63,7 @@ class add_list extends Component {
         columnsIndependence: [
             {
                 title: '产品编号',
+                width: 100,
                 dataIndex: 'number',
             },
             {
@@ -186,7 +187,7 @@ class add_list extends Component {
             },
             {
                 title: '样品编号',
-                width: 150,
+                width: 145,
                 dataIndex: 'sample_number',
             },
             {
@@ -205,14 +206,15 @@ class add_list extends Component {
             },
             {
                 title: '操作',
-                width: 150,
+                width: 165,
                 render: (text, record) => (
-                    <div>
+                    <div className='fs'>
                         {record.type == 1 &&
                             <div>
                                 <a onClick={() => this.editPro(record)}>编辑</a>
                                 <Divider type="vertical" />
                                 <a style={{ color: 'red' }} onClick={() => this.deletePro(record.id)}>删除</a>
+                                <Divider type="vertical" />
                             </div>
                         }
                         {record.type != 1 &&
@@ -220,8 +222,12 @@ class add_list extends Component {
                                 <a style={{ color: '#ccc' }}>编辑</a>
                                 <Divider type="vertical" />
                                 <a style={{ color: '#ccc' }} >删除</a>
+                                <Divider type="vertical" />
                             </div>
                         }
+                        <div>
+                            <a onClick={() => this.copyPro(record)}>复制</a>
+                        </div>
 
                     </div >
                 )
@@ -229,7 +235,6 @@ class add_list extends Component {
 
         ],
         customerData: [],
-        customerId: '',
         adminList: [],
         salespersonId: '',
         telephone: '',
@@ -242,15 +247,21 @@ class add_list extends Component {
             settlement_id: '',
             settlement_instr: '',
             delivery_address: null,
-            single_products: []
-        },
-        adressData: [],
-        disabledButAdd: true,
-        saveData: {
+            single_products: [],
+            customer_id: '',
+            type: '',
+            salesperson_id: '',
             customer_representative_name: '',
             customer_representative_contact: '',
             customer_representative_email: '',
-        }
+            name: '',
+            project_file_person_id: '',
+
+        },
+        adressData: [],
+        disabledButAdd: true,
+        isModalVisibleAddCustomer: false,
+        projectData: []
 
     }
     componentDidMount() {
@@ -265,7 +276,6 @@ class add_list extends Component {
         this.getCustomerList()
         this.getAdminList()
         this.getAdressData()
-        let height = document.getElementById('currentPage').clientHeight
     }
 
     // 获取询价单详情
@@ -302,7 +312,6 @@ class add_list extends Component {
                 this.getsettlementType(data.customer_id)
                 this.getCheckOrderProduct(data.id, data.status)
 
-                console.log('data.customer_id: ', data);
                 this.setState({
                     showData: data,
                     company_id: data.company_id
@@ -339,7 +348,6 @@ class add_list extends Component {
             }
         })
     }
-
     // 获取客户名称
     getCustomerList() {
         http.get(api.customerList).then(res => {
@@ -351,49 +359,71 @@ class add_list extends Component {
             }
         })
     }
-    // 改变客户名称
-    handleChangeCustomer = (value) => {
-        this.setState({ customerId: value })
-    }
     // 获取销售人员列表
     getAdminList() {
         http.get(api.adminList).then(res => {
             if (res.code == 1) {
                 let data = res.data.items
-                this.setState({ adminList: data })
+                let projectData = common.clone.deepClone(data)
+
+                projectData.push(
+                    {
+                        id: 0,
+                        name: '忽略'
+                    }
+                )
+
+
+                this.setState({
+                    adminList: data,
+                    projectData: projectData
+                })
             } else {
                 message.warning(res.message);
             }
         })
     }
-    // 改变销售人员
-    handleChangeAdmin = (value) => {
-        this.setState({ salespersonId: value })
+    // 获取地址
+    getAdressData() {
+        http.get(import.meta.env.VITE_APP_PODS_HOST + '/api/getProvinceCityCounty').then(res => {
+            let data = res.data
+            this.setState({ adressData: data })
+        })
     }
-    // 改变询价类型
-    handleChangeOption = (value) => {
-        this.setState({ type: value })
+    // 改变头部下拉选择
+    handleChangeCustomer = (value, key) => {
+        const { showData } = this.state
+        showData[key] = value
+        this.setState({ showData })
     }
-    // 改变电话号码
+    // 改变输入框事件
     handleChangeTelephone = (e) => {
-        const { saveData } = this.state
-        saveData[e.target.name] = e.target.value
-        this.setState({ saveData })
+        const { showData } = this.state
+        showData[e.target.name] = e.target.value
+        this.setState({ showData })
     }
     // 头部保存
     showConfirm = () => {
-        const { confirm } = Modal;
-        let _that = this
-        let { customerId, salespersonId, type, pageId, saveData } = this.state
+        let { showData, pageId } = this.state
+        let id = ''
+        if (pageId == '') {
+            id = 0
+        } else {
+            id = Number(pageId)
+        }
         let params = {
-            customer_id: customerId,
-            type: type,
-            salesperson_id: salespersonId,
-            customer_representative_name: saveData.customer_representative_name,
-            customer_representative_contact: saveData.customer_representative_contact,
-            customer_representative_email: saveData.customer_representative_email
+            id: id,
+            customer_id: showData.customer_id,
+            type: showData.type,
+            salesperson_id: showData.salesperson_id,
+            customer_representative_name: showData.customer_representative_name,
+            customer_representative_contact: showData.customer_representative_contact,
+            customer_representative_email: showData.customer_representative_email,
+            project_file_person_id: showData.project_file_person_id
 
         }
+
+        console.log('params: ', params);
         if (params.customer_id == '') {
             message.warning('请选择客户名称')
             return
@@ -403,6 +433,9 @@ class add_list extends Component {
 
         } else if (params.salesperson_id == '') {
             message.warning('请选择销售人员')
+            return
+        } else if (params.project_file_person_id === '') {
+            message.warning('请选择工程配置人员')
             return
         } else if (params.customer_representative_name == '') {
             message.warning('请填写询价人员')
@@ -417,50 +450,39 @@ class add_list extends Component {
             return
         }
 
-        confirm({
-            title: '您确定要保存么？保存之后信息不可修改。',
-            okText: '确认',
-            cancelText: '取消',
-            onOk() {
-                http.post(api.orderSetBasic, params).then(res => {
-                    if (res.code == 1) {
-                        message.success('添加成功');
-                        let history = _that.props.history
-                        setTimeout(function () {
-                            common.pathData.getPathData(
-                                {
-                                    path: '/addList?id=' + res.data,
-                                    data: {
-                                        type: 1,
-                                        id: res.data
-                                    },
-                                    history: history
-                                }
-                            )
-                        }, 1000)
-                        _that.setState({
-                            pageId: res.data,
-                            disabledButAdd: false
-                        })
-                        _that.getShowData(res.data)
 
-                    } else {
-                        message.warning(res.message);
-                    }
+
+        http.post(api.orderSetBasic, params).then(res => {
+            if (res.code == 1) {
+                message.success('保存成功');
+                let history = this.props.history
+                setTimeout(function () {
+                    common.pathData.getPathData(
+                        {
+                            path: '/addList?id=' + res.data,
+                            data: {
+                                type: 1,
+                                id: res.data
+                            },
+                            history: history
+                        }
+                    )
+                }, 1000)
+                this.setState({
+                    pageId: res.data,
+                    disabledButAdd: false
                 })
-            },
-        });
+                this.getShowData(res.data)
+
+            } else {
+                message.warning(res.message);
+            }
+        })
     }
     // 改变时间
     onChangeTime = (date, dateString) => {
         const { showData } = this.state
         showData.delivery_at = dateString
-        this.setState({ showData })
-    }
-    // 修改运输方式
-    changTransport = (value) => {
-        const { showData } = this.state
-        showData.transport_mode = value
         this.setState({ showData })
     }
     // 修改结算方式
@@ -474,19 +496,6 @@ class add_list extends Component {
             }
         })
 
-        this.setState({ showData })
-    }
-    // 修改备注
-    onChangeRemark = (e) => {
-        const { showData } = this.state
-        showData.remark = e.target.value
-        this.setState({ showData })
-
-    }
-    // 结算说明
-    onChangeInstr = (e) => {
-        const { showData } = this.state
-        showData.settlement_instr = e.target.value
         this.setState({ showData })
     }
     // 添加产品
@@ -541,22 +550,7 @@ class add_list extends Component {
         })
         // 
     }
-    // 获取地址
-    getAdressData() {
-        // 'http://test.pods.maikeos.com/api/getProvinceCityCounty'
 
-        http.get(import.meta.env.VITE_APP_PODS_HOST + '/api/getProvinceCityCounty').then(res => {
-            let data = res.data
-            this.setState({ adressData: data })
-        })
-    }
-    // 交付方式
-    changePaymentMethod = (value) => {
-        const { showData } = this.state
-        showData.delivery_mode = value
-        this.setState({ showData })
-
-    }
     onChangeAds = (value) => {
         const { showData } = this.state
         let address = {
@@ -598,11 +592,10 @@ class add_list extends Component {
             settlement_instr: showData.settlement_instr,
             delivery_address: adsData
         }
-
         if (params.delivery_mode == '') {
             message.warning('请选择交付方式')
             return
-        } else if (params.settlement_id == '') {
+        } else if (params.settlement_id === '') {
             message.warning('请选择结算方式')
             return
         } else if (params.transport_mode == '') {
@@ -612,7 +605,6 @@ class add_list extends Component {
             message.warning('请选择交付时间')
             return
         }
-
         http.post(api.orderSetDetail, params).then(res => {
             if (res.code == 1) {
                 if (type == 1) {
@@ -714,109 +706,139 @@ class add_list extends Component {
         common.downFile.down(id, storage_location)
     }
 
+    copyPro = (data) => {
+        const { pageId } = this.state
+        http.get('/inquiry/product/copy/' + data.id).then(res => {
+            if (res.code == 1) {
+                message.success('复制成功');
+                this.getShowData(pageId)
+            } else {
+                message.warning(res.message);
+            }
+
+        })
+    }
+
+    addCustomer = () => {
+        this.setState({ isModalVisibleAddCustomer: true })
+    }
+
+    handleOkAddCustomer = () => {
+        const { showData } = this.state
+        let params = {
+            customer_type: 2,
+            name: showData.name,
+            company_name: showData.name
+        }
+        http.post(import.meta.env.VITE_APP_PODS_HOST + '/customer/user/add', params).then(res => {
+            if (res.data.status == 1) {
+                message.success('保存成功')
+                this.getCustomerList()
+                this.setState({ isModalVisibleAddCustomer: false })
+            } else {
+                message.warning(res.data.msg);
+            }
+        })
+    }
+
+    handleCancelAddCustomer = () => {
+        this.setState({ isModalVisibleAddCustomer: false })
+    }
+
     render() {
         // 选择器
         const { options, paymentMethod, transportationMethod, settlementMethod, adressData,
-            columnsIndependence, customerData, adminList, pageId, list,
-            showData, disabledButAdd } = this.state
+            columnsIndependence, customerData, adminList, list, showData, disabledButAdd,
+            isModalVisibleAddCustomer, projectData } = this.state
         const Option = Select.Option;
         const { TextArea } = Input;
 
         const dateFormat = 'YYYY/MM/DD';
 
-
         return (
             <div id="currentPage" className="page">
-                {pageId == '' &&
-                    <div>
-                        <div className='fs mb-15'>
-                            <div className="title-input">
-                                <span className='w80'> <span className='c-red'>*</span> 客户名称：</span>
-                                <Select style={{ width: 200 }} onChange={this.handleChangeCustomer} placeholder="请选择">
-                                    {customerData.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
-                                </Select>
-                                <Button className="ml-10"><PlusOutlined /></Button>
-                            </div>
-                        </div>
-                        <div className='fs mb-15'>
-
-                            <div className="title-input">
-                                <span className='w80'><span className='c-red'>*</span> 询价类型：</span>
-                                <Select style={{ width: 200 }} onChange={this.handleChangeOption} placeholder="请选择">
-                                    {options.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
-                                </Select>
-                            </div>
-                            <div className="title-input">
-                                <span className='w80'><span className='c-red'>*</span> 销售人员：</span>
-                                <Select style={{ width: 200 }} onChange={this.handleChangeAdmin} placeholder="请选择">
-                                    {adminList.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
-                                </Select>
-                            </div>
-                        </div>
-
-
-                        <div className='fs mb-15'>
-                            <div className="title-input">
-                                <span className='w80'><span className='c-red'>*</span> 询价人员：</span>
-                                <Input name="customer_representative_name" onChange={this.handleChangeTelephone} style={{ width: 200 }}
-                                    placeholder="请输询价人员" />
-                            </div>
-                            <div className="title-input">
-                                <span className='w80'><span className='c-red'>*</span> 联系电话：</span>
-                                <Input name="customer_representative_contact" onChange={this.handleChangeTelephone} style={{ width: 200 }}
-                                    placeholder="请输联系电话" />
-                            </div>
-                            <div className="title-input">
-                                <span className='w80'><span className='c-red'>*</span> 邮箱地址：</span>
-                                <Input name="customer_representative_email" onChange={this.handleChangeTelephone} style={{ width: 200 }}
-                                    placeholder="请输邮箱地址" />
-                            </div>
-                            <div className="title-input">
-                                <Button type="primary" onClick={this.showConfirm}>
-                                    保存
-                                </Button>
-                            </div>
-                        </div>
-
-
-                    </div>
-                }
-
-                {pageId != '' &&
-                    <div>
-                        <div className='mb-15 fs'>
-                            <span>
-                                客户名称：
-                                {showData.customer_name}
-                                {/* <Tooltip placement="bottomLeft" title={showData.customer_name}>
-
-                                </Tooltip> */}
-                            </span>
-                        </div>
-                        <div className='mb-15 fs'>
-                            <span className="title-block w300">
-                                询价单号：{showData.number}
-                            </span>
-                            <span className="title-block w300">
-                                询价类型：{showData.type_desc}
-                            </span>
-                            <span className="title-block w300">
-                                销售人员：{showData.salesperson_name}
-                            </span>
-                        </div>
-                        <div className='mb-15'>
-                            <span className="title-block w300">
-                                询价人员：{showData.customer_representative_name}
-                            </span>
-                            <span className="title-block w300">
-                                联系电话：{showData.customer_representative_contact}
-                            </span>
-                            <span className="title-block w300">
-                                邮箱地址：{showData.customer_representative_email}
-                            </span>
+                <div>
+                    <div className='fs mb-15'>
+                        <div className="title-input">
+                            <span className='w80'> <span className='c-red'>*</span> 客户名称：</span>
+                            <Select
+                                value={showData.customer_id}
+                                style={{ width: 455 }}
+                                onChange={(event) => this.handleChangeCustomer(event, 'customer_id')}
+                                showSearch
+                                filterOption={(input, option) =>
+                                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                }
+                                placeholder="请选择客户名称">
+                                {customerData.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
+                            </Select>
+                            <Button className="ml-10" onClick={this.addCustomer}><PlusOutlined /></Button>
                         </div>
                     </div>
-                }
+                    <div className='fs mb-15'>
+                        <div className="title-input">
+                            <span className='w80'><span className='c-red'>*</span> 询价类型：</span>
+                            <Select style={{ width: 200 }} onChange={(event) => this.handleChangeCustomer(event, 'type')}
+                                value={showData.type} placeholder="请选择询价类型">
+                                {options.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
+                            </Select>
+                        </div>
+                        <div className="title-input">
+                            <span className='w80'><span className='c-red'>*</span> 销售人员：</span>
+                            <Select
+                                style={{ width: 200 }}
+                                value={showData.salesperson_id}
+                                onChange={(event) => this.handleChangeCustomer(event, 'salesperson_id')}
+                                showSearch
+                                filterOption={(input, option) =>
+                                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                }
+                                placeholder="请选择销售人员">
+                                {adminList.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
+                            </Select>
+                        </div>
+                        <div className="title-input">
+                            <span className='w80'><span className='c-red'>*</span> 工程配置：</span>
+                            <Select
+                                style={{ width: 200 }}
+                                value={showData.project_file_person_id}
+                                onChange={(event) => this.handleChangeCustomer(event, 'project_file_person_id')}
+                                showSearch
+                                filterOption={(input, option) =>
+                                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                }
+                                placeholder="请选工程配置人员">
+                                {projectData.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
+                            </Select>
+                        </div>
+                    </div>
+
+
+                    <div className='fs mb-15'>
+                        <div className="title-input">
+                            <span className='w80'><span className='c-red'>*</span> 询价人员：</span>
+                            <Input name="customer_representative_name" value={showData.customer_representative_name} onChange={this.handleChangeTelephone} style={{ width: 200 }}
+                                placeholder="请输询价人员" />
+                        </div>
+                        <div className="title-input">
+                            <span className='w80'><span className='c-red'>*</span> 联系电话：</span>
+                            <Input name="customer_representative_contact" value={showData.customer_representative_contact} onChange={this.handleChangeTelephone} style={{ width: 200 }}
+                                placeholder="请输联系电话" />
+                        </div>
+                        <div className="title-input">
+                            <span className='w80'><span className='c-red'>*</span> 邮箱地址：</span>
+                            <Input name="customer_representative_email" value={showData.customer_representative_email} onChange={this.handleChangeTelephone} style={{ width: 200 }}
+                                placeholder="请输邮箱地址" />
+                        </div>
+                        <div className="title-input">
+                            <Button type="primary" onClick={this.showConfirm}>
+                                保存
+                            </Button>
+                        </div>
+                    </div>
+
+
+                </div>
 
                 <div className="min-block mt-15">
                     <div>
@@ -835,22 +857,26 @@ class add_list extends Component {
                     </div>
                 </div>
 
-
-
                 {showData.single_products.length > 0 &&
                     <div>
                         <div className="min-block mt-15">
                             <div className="title">
                                 <div className="mr-30">
                                     <span className='w80'><span className='c-red'>*</span> 交付方式：</span>
-                                    <Select style={{ width: 300 }} onChange={this.changePaymentMethod} value={showData.delivery_mode}>
+                                    <Select
+                                        style={{ width: 300 }}
+                                        onChange={(event) => this.handleChangeCustomer(event, 'delivery_mode')}
+                                        value={showData.delivery_mode}>
                                         {paymentMethod.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
                                     </Select>
                                 </div>
 
                                 <div className="mr-30">
                                     <span className='w80'><span className='c-red'>*</span> 运输方式：</span>
-                                    <Select style={{ width: 300 }} onChange={this.changTransport} value={showData.transport_mode}>
+                                    <Select
+                                        style={{ width: 300 }}
+                                        onChange={(event) => this.handleChangeCustomer(event, 'transport_mode')}
+                                        value={showData.transport_mode}>
                                         {transportationMethod.map(e => (<Option key={e.id} value={e.id}>{e.name}</Option>))}
                                     </Select>
                                 </div>
@@ -881,7 +907,7 @@ class add_list extends Component {
                                         value={showData.delivery_address == null ? [] : [showData.delivery_address.province, showData.delivery_address.city, showData.delivery_address.district]}
                                     />
                                     <Input style={{ width: "385px", marginLeft: '15px' }}
-                                        value={showData.delivery_address == null ? '' : showData.delivery_address.detail} onChange={this.changeDetail} placeholder="请输去详细地址" />
+                                        value={showData.delivery_address == null ? '' : showData.delivery_address.detail} onChange={this.changeDetail} placeholder="请输入详细地址" />
                                 </div>
                             </div>
                             <div className="mt-15 title">
@@ -893,8 +919,9 @@ class add_list extends Component {
                                         style={{ width: "800px" }}
                                         placeholder="请输入结算说明"
                                         autoSize={{ minRows: 3, maxRows: 5 }}
-                                        onChange={this.onChangeInstr}
+                                        onChange={this.handleChangeTelephone}
                                         value={showData.settlement_instr}
+                                        name='settlement_instr'
                                         disabled
                                     />
                                 </div>
@@ -908,7 +935,8 @@ class add_list extends Component {
                                         style={{ width: "800px" }}
                                         placeholder="请输入备注说明"
                                         autoSize={{ minRows: 3, maxRows: 5 }}
-                                        onChange={this.onChangeRemark}
+                                        onChange={this.handleChangeTelephone}
+                                        name='remark'
                                         value={showData.remark}
                                     />
                                 </div>
@@ -924,8 +952,22 @@ class add_list extends Component {
                             </div>
                         }
                     </div>
-
                 }
+
+                <Modal title="添加临时客户" visible={isModalVisibleAddCustomer} onOk={this.handleOkAddCustomer}
+                    onCancel={this.handleCancelAddCustomer} cancelText='取消' okText='确定'>
+                    <div>
+                        <div>
+                            <span className='lh-32'>客户类型：临时客户</span>
+                        </div>
+                        <div className='fs'>
+                            <span className='lh-32'>客户名称：</span>
+                            <Input name='name' onChange={this.handleChangeTelephone} placeholder="请输入客户名称" className='w200' />
+                        </div>
+
+                    </div>
+                </Modal >
+
 
             </div >
         );

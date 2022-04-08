@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { Table, Switch, Button, Modal, Input, message, Divider, Popconfirm } from 'antd';
+import { Table, Switch, Button, Modal, Input, message, Divider, Popconfirm, Pagination } from 'antd';
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
-import common from '../../../public/common';
+import common from '../common/common';
 import http from '../../http/index'
 import api from "../../http/httpApiName";
 import './packing_material.css'
@@ -107,6 +107,12 @@ class index extends Component {
                 )
             },
         ],
+        pagination: {
+            total: 0,
+            current: 1,
+            pageSize: 15,
+        },
+        pageSizeOptions: [10, 15, 20, 25],
     }
 
 
@@ -115,14 +121,28 @@ class index extends Component {
     }
 
     getList() {
-        http.get(api.packingList).then(res => {
+        const { pagination } = this.state
+        http.get(api.packingList, {
+            params: {
+                per_page: pagination.pageSize,
+                page: pagination.current,
+            }
+        }).then(res => {
             if (res.code == 1) {
                 let data = res.data.items;
+                pagination.total = res.data.total
                 this.setState({ list: data })
             }
         })
     }
 
+    onChangePage = (page, pageSize) => {
+        const { pagination } = this.state
+        pagination.current = page
+        pagination.pageSize = pageSize
+        this.setState({ pagination })
+        this.getList()
+    }
     deleteMeterial(id) {
         // message.success('删除成功'); 
         http.get(api.deleteMateria, {
@@ -223,7 +243,7 @@ class index extends Component {
         )
     }
     render() {
-        const { list, isModalVisible, materialArr, columns, } = this.state
+        const { list, isModalVisible, materialArr, columns, pagination, pageSizeOptions } = this.state
         if (materialArr.length == 0) {
             materialArr.push(
                 {
@@ -239,6 +259,10 @@ class index extends Component {
                     </div>
                     <div className="mt-15">
                         <Table rowKey={record => record.id} columns={columns} dataSource={list} pagination={false} />
+                        <div style={{ display: 'flex', justifyContent: 'end', marginTop: '15px' }}>
+                            <Pagination current={pagination.current} total={pagination.total}
+                                pageSize={pagination.pageSize} onChange={this.onChangePage} pageSizeOptions={pageSizeOptions} showSizeChanger />
+                        </div>
                     </div>
                     <div>
                         <Modal title="新建" visible={isModalVisible} onOk={this.handleOk} onCancel={this.cancleIt} okText="确定" cancelText="取消">

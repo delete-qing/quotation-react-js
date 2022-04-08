@@ -3,7 +3,7 @@ import { Select, Input, Button, message, Checkbox, Radio, InputNumber, Upload } 
 import { MinusCircleOutlined, PlusCircleOutlined, UploadOutlined, DeleteOutlined } from '@ant-design/icons';
 import http from '../../../../http/index'
 import api from '../../../../http/httpApiName'
-import common from '../../../../../public/common';
+import common from '../../../common/common';
 import '../../index.css'
 
 class Independence_product extends Component {
@@ -355,8 +355,14 @@ class Independence_product extends Component {
     saveAddProduct = (id) => {
         const { pageId, fList, inputData, numArr, inquiryList, packList, toEdit } = this.state
         let sing = []
+        console.log('inquiryList: ', inquiryList);
+        let flagIsQuiry = false
         inquiryList.forEach(e => {
             e.data = []
+            if (e.is_required && !e.checked) {
+                flagIsQuiry = true
+            }
+
             if (e.checked) {
                 e.options.forEach(i => {
                     if (i.checked) {
@@ -388,11 +394,12 @@ class Independence_product extends Component {
             }
         })
 
-        let unitList = []
 
+        let unitList = []
+        let flag = false
         packList.forEach((i, index) => {
-            if (i.name == undefined || i.name == '') {
-                unitList = []
+            if (i.name == undefined || i.name == '' || i.capacity_type == '' || i.pack_material_id == undefined) {
+                flag = true
             } else {
                 unitList.push(
                     {
@@ -432,6 +439,8 @@ class Independence_product extends Component {
             pack_units: unitList,
 
         }
+
+        console.log('params: ', params);
         if (params.name == '') {
             message.warning('请输入产品名称')
             return
@@ -446,6 +455,12 @@ class Independence_product extends Component {
             return
         } else if (params.params.length == 0) {
             message.warning('请选择询价选项')
+            return
+        } else if (flag) {
+            message.warning('请填写包装单位必填字段');
+            return
+        } else if (flagIsQuiry) {
+            message.warning('请勾选必填项 ');
             return
         }
 
@@ -545,7 +560,7 @@ class Independence_product extends Component {
 
 
     render() {
-        const { numArr, inquiryList, packList, material, inputData, pageId, editId, company_id, isShowUploadList } = this.state
+        const { numArr, inquiryList, packList, material, inputData, pageId, editId, isShowUploadList } = this.state
         const Option = Select.Option;
         if (numArr.length == 0) {
             numArr.push(
@@ -662,7 +677,6 @@ class Independence_product extends Component {
                                 </div>
                             </div>
                             <div>
-
                                 <div className="mr-30">
                                     <div className='fs'>
                                         <div className='lh-32'>产品附件：</div>
@@ -686,7 +700,6 @@ class Independence_product extends Component {
                                 </div>
                             </div>
                         </div>
-
                         <div className="mr-30">
                             <div className='lh-32' style={{ width: '100px' }}>
                                 <span className='c-red'>*</span> 询价选项：
@@ -697,7 +710,11 @@ class Independence_product extends Component {
                                         if (e.is_single_choice) {
                                             return (
                                                 <div style={{ display: 'flex', marginBottom: '15px', flexWrap: 'wrap' }} key={index}>
-                                                    <div className="inquiry  lh-32">  {e.name} ：</div>
+                                                    <div className="inquiry  lh-32">
+                                                        {e.is_required &&
+                                                            <span className='c-red'>*</span>
+                                                        }{e.name} ：
+                                                    </div>
                                                     <div className='flxe-i'>
                                                         <Radio.Group onChange={(e) => this.onChangeSing(e, index)} value={e.valueData}>
                                                             {
@@ -722,7 +739,11 @@ class Independence_product extends Component {
                                         } else {
                                             return (
                                                 <div className="inquiry-block" key={index}>
-                                                    <span className="inquiry lh-32">  {e.name} ：</span>
+                                                    <span className="inquiry lh-32">
+                                                        {e.is_required &&
+                                                            <span className='c-red'>*</span>
+                                                        } {e.name} ：
+                                                    </span>
                                                     {
                                                         e.options.map((i, index1) => (
                                                             <Checkbox key={index1} onChange={(event) => this.onChangeMultiple(event, index, index1)} checked={i.checked} className='mb-15'>
@@ -756,11 +777,11 @@ class Independence_product extends Component {
                         <div key={index} className="package-block">
                             <div className="flxe-i">
                                 <div className="mr-30">
-                                    <span>{e.level}级包装单位：</span>
+                                    <span><span className='c-red'>*</span> {e.level}级包装单位：</span>
                                     <Input value={e.name} onChange={(event) => this.changePackageInput(event, index)} name='name' className="w200" placeholder="请输入包装单位" />
                                 </div>
                                 <div className="mr-30">
-                                    <span>包装材质：</span>
+                                    <span><span className='c-red'>*</span> 包装材质：</span>
                                     <Select style={{ width: 200 }} onChange={(event) => this.changePackageMaterialSelect(event, index)} value={e.pack_material_id}>
                                         {
                                             material.map(i => (
@@ -770,7 +791,7 @@ class Independence_product extends Component {
                                     </Select>
                                 </div>
                                 <div className="mr-30">
-                                    <span>包装容量：</span>
+                                    <span><span className='c-red'>*</span> 包装容量：</span>
                                     <Select style={{ width: 200 }} placeholder="请选择" onChange={(event) => this.changePackageSelect(event, index)} value={e.capacity_type}>
                                         {
                                             capacityType.map(j => (
@@ -796,16 +817,15 @@ class Independence_product extends Component {
                     <div className="footer-flex">
                         {pageId != '' &&
                             <div className='foot-fs'>
-                                <Button type="primary" size='large' onClick={() => this.saveAddProduct()}>保存</Button>
                                 <Button type="primary" size='large' onClick={() => this.backPage()}>返回</Button>
+                                <Button type="primary" size='large' onClick={() => this.saveAddProduct()}>保存</Button>
                             </div>
                         }
                         {editId != '' &&
                             <div className='foot-fs'>
-                                <Button type="primary" size='large' onClick={() => this.saveAddProduct(editId)}>保存</Button>
                                 <Button type="primary" size='large' onClick={() => this.backPage(editId)}>返回</Button>
+                                <Button type="primary" size='large' onClick={() => this.saveAddProduct(editId)}>保存</Button>
                             </div>
-
                         }
                     </div>
                 </div>

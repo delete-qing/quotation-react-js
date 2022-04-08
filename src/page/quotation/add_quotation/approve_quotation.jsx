@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Table, Button, Select, message, Input } from 'antd';
 import { EditTwoTone } from '@ant-design/icons';
-import common from '../../../../public/common'
+import common from '../../common/common'
 import http from '../../../http/index'
 import api from '../../../http/httpApiName'
 import '../quotation.css'
@@ -150,13 +150,13 @@ export default class approve_quotation extends Component {
                 )
             },
             {
-                title: '报价折扣(%)',
+                title: '利润率(%)',
                 render: (text, record) => (
                     <div>
                         {record.check_price_order_details != null &&
                             record.check_price_order_details.map((e, index) => (
                                 <div key={index}>
-                                    {e.quote_discount_rate}
+                                    {e.quote_discount_rate + '%'}
                                 </div>
                             ))
                         }
@@ -182,6 +182,7 @@ export default class approve_quotation extends Component {
             this.getShowData(dataId)
         }
     }
+
     getShowData(id) {
         http.get(api.quoteGet, {
             params: {
@@ -213,24 +214,26 @@ export default class approve_quotation extends Component {
         })
     }
 
-
     changeRemark = (e) => {
         this.setState({ return_reason: e.target.value })
     }
     changOption = (value) => {
         this.setState({ result: value })
     }
+
     commit = () => {
         const { pageId, result, return_reason } = this.state
         let params = {
             id: Number(pageId),
-            result: result == 1 ? 'true' : 'false',
+            result: result == 1 ? true : false,
             return_reason: return_reason
         }
-        console.log(params);
+        if (!params.result && params.return_reason == '') {
+            message.warning('请填写退回原因')
+        }
         http.post(api.quoteApprove, params).then(res => {
             if (res.code == 1) {
-                message.success('审批成功')
+                message.success('提交成功')
                 let history = this.props.history
                 setTimeout(function () {
                     common.pathData.getPathData(
@@ -251,10 +254,8 @@ export default class approve_quotation extends Component {
 
     render() {
         const { showData, columnsPro, proList, result, type } = this.state
-
         const { Option } = Select;
         const { TextArea } = Input;
-
         const option = [
             {
                 id: 1,
@@ -262,7 +263,7 @@ export default class approve_quotation extends Component {
             },
             {
                 id: 2,
-                name: '驳回'
+                name: '退回'
             }
         ]
         return (
@@ -307,17 +308,6 @@ export default class approve_quotation extends Component {
                     <div>
                         <span className="lh-32">
                             交付地址：{showData.inquiry_order.address}
-                            {/* {
-                                showData.delivery_address != null &&
-                                <>
-                                    {showData.delivery_address.country}
-                                    {showData.delivery_address.province}
-                                    {showData.delivery_address.city}
-                                    {showData.delivery_address.district}
-                                    {showData.delivery_address.detail}
-                                </>
-                            } */}
-
                         </span>
                     </div>
                     <div>
@@ -355,7 +345,7 @@ export default class approve_quotation extends Component {
                             }
                         </div>
                         <div className="but-class-center">
-                            <Button type="primary" size='large' onClick={this.commit}>提交</Button>
+                            <Button type="primary" onClick={this.commit}>提交</Button>
                         </div>
                     </>
                 }

@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import { Table, message, Tooltip } from 'antd';
+import { Table, message } from 'antd';
 import http from '../../../../http/index'
 import api from '../../../../http/httpApiName'
-import common from '../../../../../public/common';
+import common from '../../../common/common';
 
 class lookPage extends Component {
 
@@ -176,7 +176,7 @@ class lookPage extends Component {
                         <div>
                             {
                                 show.map((e, index) => (
-                                    <a key={index} className='tab-dowon' key={index} onClick={() => this.tabDownLoad(e.file_id, e.storage_location)}>
+                                    <a className='tab-dowon' key={index} onClick={() => this.tabDownLoad(e.file_id, e.storage_location)}>
                                         {e.name}
                                     </a>
                                 ))
@@ -259,9 +259,7 @@ class lookPage extends Component {
                                     </div>
                                 </div>
                             ))
-
                             }
-
                         </div>
                     )
                 }
@@ -309,13 +307,11 @@ class lookPage extends Component {
             if (res.code == 1) {
                 let data = res.data
                 this.setState({ descriptionName: data.name })
-                console.log('data: ====', data);
             } else {
                 message.warning(res.message)
             }
         })
     }
-
 
     // 询价单
     getCheckOrderProduct(id) {
@@ -374,6 +370,10 @@ class lookPage extends Component {
                         <span className="title-block w300">
                             销售人员：{showData.salesperson_name}
                         </span>
+                        <span className="title-block w300">
+                            工程配置：{showData.project_file_person_name}
+                        </span>
+
                     </div>
                     <div className='mb-15'>
                         <span className="title-block w300">

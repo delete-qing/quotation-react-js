@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { Table, Button, message, Input, Tabs, Upload } from 'antd';
+import { Table, Button, message, Input, Tabs, Upload, Modal } from 'antd';
 import { UploadOutlined, DeleteOutlined } from '@ant-design/icons';
-import common from '../../../../public/common'
+import common from '../../common/common'
 import http from '../../../http'
 import api from '../../../http/httpApiName'
 class project extends Component {
@@ -18,7 +18,7 @@ class project extends Component {
         columns: [
             {
                 title: '产品编号',
-                dataIndex: 'name',
+                dataIndex: 'number',
             },
             {
                 title: '产品名称',
@@ -45,7 +45,8 @@ class project extends Component {
                 dataIndex: 'package_unit',
             },
         ],
-        list: []
+        list: [],
+        visibleBack: false
 
     }
 
@@ -63,6 +64,7 @@ class project extends Component {
             if (res.code == 1) {
                 let company_id = res.data.company_id
                 let data = res.data
+                console.log('data: ', data);
                 let productId = res.data.product.id
                 let list = []
                 list.push(res.data.product)
@@ -185,9 +187,91 @@ class project extends Component {
         })
     }
 
+    onChangeProjectDescription = (e) => {
+        const { showData } = this.state
+        showData.description = e.target.value
+        this.setState({ showData })
+    }
+
+
+    backProject = () => {
+        this.setState({ visibleBack: true })
+    }
+
+    handleOkBack = () => {
+        const { pageId, showData } = this.state
+        let params = {
+
+            id: Number(pageId),
+            stage: 1,
+            description: showData.description,
+        }
+
+        let history = this.props.history
+
+        console.log('params: ', params);
+        if (params.description == undefined) {
+            message.warning('请输入退回原因')
+            return
+        } else {
+            http.post('/bom/order/return', params).then(res => {
+                if (res.code == 1) {
+                    message.success('退回成功')
+                    setTimeout(() => {
+                        common.pathData.getPathData(
+                            {
+                                path: '/QuotationForm',
+                                data: {
+                                    type: 2
+                                },
+                                history: history
+                            }
+                        )
+                    }, 500)
+
+                } else {
+                    message.warning(res.message)
+                }
+            })
+        }
+    }
+
+
+    handleCancelBack = () => {
+        this.setState({ visibleBack: false })
+    }
+
+
     render() {
-        const { showData, columns, list } = this.state
+        const { showData, columns, list, visibleBack } = this.state
         const { TextArea } = Input;
+        let showBack
+        let showButton
+        if (showData.status == 1 || showData.status == 2 || showData.status == 10) {
+            showBack = <>
+                <div className='fs mb-15'>
+                    <div>
+                        <span style={{ width: 70, display: 'block' }}>
+                            退回说明：
+                        </span>
+                    </div>
+                    <div style={{ width: '100%' }}>
+                        <TextArea value={showData.description} onChange={this.onChangeProjectDescription} rows={3} />
+                    </div>
+                </div>
+                <div style={{ marginLeft: 70 }} >注：该阶段将退回至询价分配，已存在的核价单和BOM工单均会被删除。该操作不可逆，请谨慎进行！</div>
+
+            </>
+            showButton = <>
+                <Button className='mr-50' type="primary" danger onClick={this.backProject}>退回询价单</Button>
+            </>
+
+        } else {
+            showButton = <>
+                <Button className='mr-50' type="primary" danger disabled>退回询价单</Button>
+            </>
+        }
+
         return (
             <div className='page'>
                 <div className='mb-15 fs'>
@@ -235,8 +319,8 @@ class project extends Component {
                             {showData.product.attaches.length != 0 &&
                                 showData.product.attaches.map(f => (
                                     <div key={f.id} className='upload-class'>
-                                        <div className='fs-bw'>
-                                            <a style={{ marginLeft: 10 }} onClick={() => this.getDownloadUrl(f.file_id, f.storage_location)}>{f.filename}</a>
+                                        <div className='fs-bw ml-10'>
+                                            <a onClick={() => this.getDownloadUrl(f.file_id, f.storage_location)}>{f.filename}</a>
                                             <DeleteOutlined style={{ color: 'red', marginLeft: 50, marginRight: 20, marginTop: 5 }} onClick={() => this.deleteUpload(f.id)} />
                                         </div>
 
@@ -264,8 +348,8 @@ class project extends Component {
                             {showData.attaches.length != 0 &&
                                 showData.attaches.map(f => (
                                     <div key={f.id} className='upload-class'>
-                                        <div className='fs-bw'>
-                                            <a style={{ marginLeft: 10 }} onClick={() => this.getDownloadUrl(f.file_id, f.storage_location)}>{f.filename}</a>
+                                        <div className='fs-bw ml-10'>
+                                            <a onClick={() => this.getDownloadUrl(f.file_id, f.storage_location)}>{f.filename}</a>
                                             <DeleteOutlined style={{ color: 'red', marginLeft: 50, marginRight: 20, marginTop: 5 }} onClick={() => this.deleteUpload(f.id)} />
                                         </div>
                                     </div>
@@ -274,7 +358,7 @@ class project extends Component {
                         </div>
                     </div>
                 </div>
-                <div className='fs'>
+                <div className='fs mb-15'>
                     <div>
                         <span style={{ width: 70, display: 'block' }}>
                             工程备注：
@@ -284,10 +368,28 @@ class project extends Component {
                         <TextArea value={showData.project_remark} onChange={this.onChangeProjectRemarkvalue} rows={4} style={{ width: '70%' }} />
                     </div>
                 </div>
+
+
                 <div className="min-block">
                     <div className='footer-flex'>
+                        {showButton}
                         <Button type="primary" onClick={this.commitBomProject}>提交</Button>
                     </div>
+                </div>
+
+                <div>
+                    <Modal
+                        title="退回"
+                        visible={visibleBack}
+                        onOk={this.handleOkBack}
+                        onCancel={this.handleCancelBack}
+                        cancelText="取消" okText="确定"
+                        width={800}
+                    >
+                        <div>
+                            {showBack}
+                        </div>
+                    </Modal>
                 </div>
             </div >
         );

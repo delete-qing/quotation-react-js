@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Table, Button, Modal, Divider, Select, message, Input, Tabs } from 'antd';
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
-import urlId from '../../../../public/common'
+import urlId from '../../common/common'
 import http from '../../../http'
 import api from '../../../http/httpApiName'
 import '../index.css'

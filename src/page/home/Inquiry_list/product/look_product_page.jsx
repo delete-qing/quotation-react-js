@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Table, message } from 'antd';
 import http from '../../../../http/index'
 import api from '../../../../http/httpApiName'
-import common from '../../../../../public/common';
+import common from '../../../common/common';
 
 
 
@@ -26,7 +26,6 @@ class look_product_page extends Component {
                                         {e.level}级包装单位：{e.name}，
                                     </span>
                                     {e.pack_material != null &&
-
                                         <span style={{ display: 'inline-block', marginRight: '10px' }}>
                                             包装材质：{e.pack_material.name}，
                                         </span>
@@ -39,7 +38,6 @@ class look_product_page extends Component {
                                             固定数量：{e.capacity_value}
                                         </span>
                                     }
-
                                 </div>
                             ))
                         }
@@ -63,8 +61,6 @@ class look_product_page extends Component {
                 dataIndex: 'created_at',
             },
         ],
-
-
         list: []
     }
 
@@ -81,7 +77,6 @@ class look_product_page extends Component {
                 let data = res.data
                 let list = []
                 list.push(res.data)
-
                 let resultMap = {};
                 data.options.forEach(option => {
                     let remark = ''
@@ -98,7 +93,6 @@ class look_product_page extends Component {
                         resultMap[option.param.id]['child'].push(option.name + remark)
                     }
                 })
-
                 let resutlList = [];
                 for (let key in resultMap) {
                     resutlList.push(resultMap[key]);
@@ -115,11 +109,8 @@ class look_product_page extends Component {
         common.downFile.down(id, storage_location)
     }
 
-
     render() {
         const { showData, columns, list } = this.state
-
-
         return (
             <div className='page'>
                 <div>

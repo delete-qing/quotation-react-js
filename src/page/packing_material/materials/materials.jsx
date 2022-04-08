@@ -2,79 +2,13 @@ import React, { Component } from 'react'
 import { Table, Input, message, Pagination, Checkbox, Button, Select } from 'antd';
 import http from '../../../http/index'
 import api from '../../../http/httpApiName'
-import common from '../../../../public/common'
+import common from '../../common/common'
 import '../packing_material.css'
 
 export default class materials extends Component {
     state = {
         pageId: '',
-        columnsMaterials: [
-            {
-                title: '物料名称',
-                width: 300,
-                render: (text, record, index) => (
-                    <div>
-                        <Checkbox onChange={(e) => this.onChangeOption(e, index, record)} checked={record.checked}>
-                            <a>{record.name}</a>
-                        </Checkbox>
-                    </div>
-                ),
-            },
-            {
-                title: '物料编号',
-                dataIndex: 'show_sku_number',
-            },
-            {
-                title: '物料特性',
-                width: 350,
-                render: (text, record) => (
-                    <div>
-                        {record.character_list.map(e => (
-                            <span key={e.id}>
-                                {e.name}，
-                            </span>
-                        ))
 
-                        }
-                    </div>
-                ),
-            },
-            {
-                title: '物料规格',
-                width: 250,
-                render: (text, record) => (
-                    <div>
-                        {record.specification_list.map(e => (
-                            <span key={e.id} style={{ display: 'block' }}>
-                                {e.name}，
-                            </span>
-                        ))
-
-                        }
-                    </div>
-                ),
-            },
-            {
-                title: '物料单位',
-                dataIndex: 'unit',
-            },
-            {
-                title: '计数单位',
-                dataIndex: 'counting_method_unit_text',
-            },
-            {
-                title: '计量单位',
-                dataIndex: 'measurement_method_unit_text',
-            },
-            {
-                title: '定制属性',
-                dataIndex: 'custom_attributes_text',
-            },
-            {
-                title: '来源属性',
-                dataIndex: 'source_attribute_text',
-            }
-        ],
         materialsList: [],
         pagination: {
             total: 0,
@@ -203,7 +137,7 @@ export default class materials extends Component {
         this.getList()
     }
     onChangeOption = (e, index) => {
-        const { materialsList, chosenMaterialsList } = this.state
+        const { materialsList } = this.state
         materialsList.forEach(e => {
             e.checked = false
         })
@@ -293,7 +227,7 @@ export default class materials extends Component {
     }
 
     render() {
-        const { columnsMaterials, materialsList, pagination, pageSizeOptions, chosenMaterialsList,
+        const { materialsList, pagination, pageSizeOptions, chosenMaterialsList,
             chosenColumnsMaterials } = this.state
         const { Option } = Select;
         const option = [
@@ -312,6 +246,74 @@ export default class materials extends Component {
                 id: '',
                 name: '全部'
             },
+        ]
+
+        const columnsMaterials = [
+            {
+                title: '物料名称',
+                width: 300,
+                render: (text, record, index) => (
+                    <div>
+                        <Checkbox onChange={(e) => this.onChangeOption(e, index)} checked={record.checked}>
+                            <a>{record.name}</a>
+                        </Checkbox>
+                    </div>
+                ),
+            },
+            {
+                title: '物料编号',
+                dataIndex: 'show_sku_number',
+            },
+            {
+                title: '物料特性',
+                width: 350,
+                render: (text, record) => (
+                    <div>
+                        {record.character_list.map(e => (
+                            <span key={e.id}>
+                                {e.name}，
+                            </span>
+                        ))
+
+                        }
+                    </div>
+                ),
+            },
+            {
+                title: '物料规格',
+                width: 250,
+                render: (text, record) => (
+                    <div>
+                        {record.specification_list.map(e => (
+                            <span key={e.id} style={{ display: 'block' }}>
+                                {e.name}，
+                            </span>
+                        ))
+
+                        }
+                    </div>
+                ),
+            },
+            {
+                title: '物料单位',
+                dataIndex: 'unit',
+            },
+            {
+                title: '计数单位',
+                dataIndex: 'counting_method_unit_text',
+            },
+            {
+                title: '计量单位',
+                dataIndex: 'measurement_method_unit_text',
+            },
+            {
+                title: '定制属性',
+                dataIndex: 'custom_attributes_text',
+            },
+            {
+                title: '来源属性',
+                dataIndex: 'source_attribute_text',
+            }
         ]
         return (
             <div className="page">

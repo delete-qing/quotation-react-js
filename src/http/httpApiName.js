@@ -9,7 +9,11 @@ const API = {
     getDownloadUrl: '/file/get_download_url',
 
     // 询价单
-    list: '/inquiry/order/list',
+    list: {
+        1: '/inquiry/order/list',
+        2: '/inquiry/order/all'
+    },
+
     orderSetBasic: '/inquiry/order/set_basic',
     orderGet: '/inquiry/order/get',
     productGet: '/inquiry/product/get',
@@ -25,7 +29,9 @@ const API = {
     assignConfirm: '/inquiry/order/assign/confirm',
     orderStatus: '/inquiry/order/status',
     settlementList: '/pods/settlement/list',
+    settlementGet: '/pods/settlement/get',
     productList: '/inquiry/order/get/',
+    inquiryCancel: '/inquiry/order/cancel',
 
 
     // 包装材质接口、
@@ -43,41 +49,39 @@ const API = {
     inquiryDelete: '/inquiry/param/delete',
     paramUpdate: '/inquiry/param/update',
 
+
     // 核价
-    checkList: '/check/order/list',
+    checkList: {
+        1: '/check/order/list',
+        2: '/check/order/all'
+    },
     checkGet: '/check/order/get',
     checkSave: '/check/order/save',
     checkCommit: '/check/order/commit',
     checkCost: '/check/order/bom/get/cost',
     bomCostDetail: '/check/order/bom/set/cost/detail',
     checkStatus: '/check/order/status',
-    techDetail:'/check/order/bom/set/tech/detail',
+    checkAnalyze: '/check/order/cost/analyze',
 
     // 报价
-    bomList: '/bom/order/list',
+    bomList: {
+        1: '/bom/order/list',
+        2: '/bom/order/all'
+    },
     bomAssign: '/bom/order/assign',
-    bomGet: '/bom/order/get',
     versionList: '/bom/version/latest',
     versionCreate: '/bom/version/create',
     quoteStatus: '/quote/order/status',
     quoteGet: '/quote/order/get',
-    quoteList: '/quote/order/list',
+    quoteList: {
+        1: '/quote/order/list',
+        2: '/quote/order/all',
+    },
     quoteCreate: '/quote/order/create',
     quoteApprove: '/quote/order/approve',
     orderConfrim: '/quote/order/confirm',
     orderQuote: '/quote/order/quote',
     orderTransfer: '/quote/order/transfer',
-
-
-
-
-    // 添加子件
-    componentList: '/bom/structure/component/list',
-    componentCreate: '/bom/structure/component/create',
-    // 组件
-    combinationCreate: '/bom/structure/combination/create',
-    preComponentCreate: '/bom/structure/pre_component/create',
-
 
     // 报价审批设置
     discountList: '/quote/discount/list',
@@ -86,9 +90,22 @@ const API = {
     discountDelete: '/quote/discount/delete',
     discountUpdate: '/quote/discount/update',
     // bom
-    bomGet: '/bom/get',
+    bomGet: '/bom/order/get',
     costDetail: '/check/order/bom/get/cost/detail',
     bomStatus: '/bom/order/status',
+    bomProject: '/bom/order/project',
+
+
+
+    // 添加子件  废弃  但不可删有的页面在用
+    componentList: '/bom/structure/component/list',
+    componentCreate: '/bom/structure/component/create',
+    // 组件
+    combinationCreate: '/bom/structure/combination/create',
+    preComponentCreate: '/bom/structure/pre_component/create',
+
+
+
 
 }
 
